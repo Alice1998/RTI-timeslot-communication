@@ -69,6 +69,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * Static Globals
 *****************************************************************************/
 
+// modified here
+#define INDEX 1
 
 /* Buffer for advertisement data */
 static uint8_t ble_adv_data[BLE_ADDR_OFFSET + BLE_ADDR_LEN + BLE_PAYLOAD_MAXLEN];
@@ -374,7 +376,8 @@ static void sm_enter_wait_for_idle(bool req_rx_accepted)
 		periph_radio_shorts_set(RADIO_SHORTS_READY_START_Msk | RADIO_SHORTS_END_DISABLE_Msk);
 		
 		/* wait exactly 150us to send response. NOTE: the Reference manual is wrong */
-		periph_radio_tifs_set(150);
+		// modified here***
+		periph_radio_tifs_set(150*INDEX);
 		
 		/* send scan req to user space */
 		scan_req_evt_dispatch();
@@ -560,7 +563,7 @@ bool ctrl_adv_param_set(btle_cmd_param_le_write_advertising_parameters_t* adv_pa
 
 	/* put address into advertisement packet buffer */
 	//static uint8_t ble_addr[] = 000000;
-	// copy from main.c
+	// copied from main.c
 	static uint8_t ble_addr[] = {0x4e, 0x6f, 0x72, 0x64, 0x69, 0x63};
 		//DEFAULT_DEVICE_ADDRESS;
 	memcpy((void*) &ble_adv_data[BLE_ADDR_OFFSET],
