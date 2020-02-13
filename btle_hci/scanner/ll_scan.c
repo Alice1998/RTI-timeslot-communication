@@ -420,6 +420,7 @@ void ll_scan_tx_cb (void)
     /* SCAN_REQ has been transmitted, and we must configure the radio to
      * listen for the incoming SCAN_RSP.
      */
+		// to be modified here
     case SCANNER_STATE_SEND_REQ:
       m_state_send_scan_req_exit ();
       m_state_receive_scan_rsp_entry ();

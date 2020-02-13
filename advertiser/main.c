@@ -124,6 +124,16 @@ static uint8_t ble_adv_data[] =
   'T', 'i', 'm', 'e', 's', 'l', 'o', 't', ' ', 'a', 'd', 'v',
 };
 
+static uint8_t ble_rsp_data[]=
+{
+	0x21,
+	0x05,
+	0x00,0x00,0x00,0x00 ,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00 ,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00 ,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00 ,0x00,0x00,0x00,0x00,
+};
+
 /*****************************************************************************
 * Static Functions
 *****************************************************************************/
@@ -232,9 +242,10 @@ static void ble_setup(void)
   btle_hci_adv_data_set(&adv_data);
 
   /* Set scan response data: */
+	// to be modified
   btle_cmd_param_le_write_scan_response_data_t scan_rsp_data;
-  memcpy((void*) &scan_rsp_data.response_data[0], (void*) &ble_adv_data[0], sizeof(ble_adv_data));
-  scan_rsp_data.data_length = sizeof(ble_adv_data);
+  memcpy((void*) &scan_rsp_data.response_data[0], (void*) &ble_rsp_data[0], sizeof(ble_rsp_data));
+  scan_rsp_data.data_length = sizeof(ble_rsp_data);
   btle_hci_adv_scan_rsp_data_set(&scan_rsp_data);
 
   /* all parameters are set up, enable advertisement */
