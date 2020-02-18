@@ -342,6 +342,7 @@ void ll_scan_rx_cb (bool crc_valid)
          * a SCAN_REQ, and we should wait for a SCAN_RSP.
          */
         case PACKET_TYPE_ADV_IND:
+					
           m_state_receive_adv_exit ();
 
           m_adv_report_generate (m_rx_buf);
