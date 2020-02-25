@@ -39,6 +39,10 @@
 
 #include <stdbool.h>
 
+// add
+int8_t check_adv_packet(uint8_t * const pkt);
+void data_report_generate(uint8_t flag);
+
 /** @brief Callback for events on the radio */
 void ll_scan_rx_cb (bool crc_valid);
 void ll_scan_timeout_cb (void);

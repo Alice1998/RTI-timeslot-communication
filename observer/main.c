@@ -202,6 +202,7 @@ int main(void)
   ASSERT (btle_err_code == BTLE_STATUS_CODE_SUCCESS);
   __LOG ("Scanner parameters set");
 
+  // a timeslot is requested here
   btle_err_code = btle_scan_enable_set (scan_enable);
   ASSERT (btle_err_code == BTLE_STATUS_CODE_SUCCESS);
   __LOG ("Scanner enabled");
@@ -214,18 +215,39 @@ int main(void)
     {
       while (btle_scan_ev_get (&report) != BTLE_STATUS_CODE_COMMAND_DISALLOWED)
       {
-        __LOG("Type: %X, Addr: %X:%X:%X:%X:%X:%X, RSSI: %i",
-          report.event.params.le_advertising_report_event.event_type,
-          report.event.params.le_advertising_report_event.address[5],
-          report.event.params.le_advertising_report_event.address[4],
-          report.event.params.le_advertising_report_event.address[3],
-          report.event.params.le_advertising_report_event.address[2],
-          report.event.params.le_advertising_report_event.address[1],
-          report.event.params.le_advertising_report_event.address[0],
-          report.event.params.le_advertising_report_event.rssi);
-      }
+				switch(report.event.event_code)
+				{
+					case BTLE_EVENT_LE_ADVERTISING_REPORT:
+						__LOG("Type: %X, Addr: %X:%X:%X:%X:%X:%X, RSSI: %i, data_4: %X %X %X %X",
+							report.event.params.le_advertising_report_event.event_type,
+							report.event.params.le_advertising_report_event.address[5],
+							report.event.params.le_advertising_report_event.address[4],
+							report.event.params.le_advertising_report_event.address[3],
+							report.event.params.le_advertising_report_event.address[2],
+							report.event.params.le_advertising_report_event.address[1],
+							report.event.params.le_advertising_report_event.address[0],
+							report.event.params.le_advertising_report_event.rssi);
+							for(uint8_t i=0;i<31;i++)
+							{
+								__LOG("%X",report.event.params.le_advertising_report_event.report_data[i]);
+							}
+							break;
+							
+					case BTLE_VS_EVENT_NRF_LL_EVENT_SCAN_REQ_REPORT:
+						__LOG("%X RSSI Data: ",report.event.params.le_advertising_report_event.event_type);
+						/*for(uint8_t j=0;j<31;j++)
+						{
+							__LOG("%X",report.event.params.le_advertising_report_event.report_data[j]);
+						}
+					*/
+						break;
+					
+					default:
+						break;
+				}
+			}
 
-      sw_interrupt = false;
+			sw_interrupt = false;
     }
   }
 }

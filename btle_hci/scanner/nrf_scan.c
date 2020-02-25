@@ -64,7 +64,7 @@ static nrf_radio_request_t m_timeslot_req_earliest = {
   .params.earliest = {
     NRF_RADIO_HFCLK_CFG_DEFAULT,
     NRF_RADIO_PRIORITY_NORMAL,
-    0,
+    100000,
     TIMESLOT_TIMEOUT_US
   }
 };
@@ -74,7 +74,7 @@ static nrf_radio_request_t m_timeslot_req_normal = {
     NRF_RADIO_HFCLK_CFG_DEFAULT,
     NRF_RADIO_PRIORITY_NORMAL,
     0,
-    0
+		0
   }
 };
 
@@ -106,6 +106,7 @@ nrf_radio_signal_callback_return_param_t *radio_cb (uint8_t sig)
       /* Check the timeslot cleanup counter */
       if (NRF_TIMER0->EVENTS_COMPARE[0] != 0)
       {
+				//data_report_generate(0);
         ll_scan_stop ();
         
         NRF_TIMER0->EVENTS_COMPARE[0] = 0;
@@ -117,13 +118,16 @@ nrf_radio_signal_callback_return_param_t *radio_cb (uint8_t sig)
       }
       
       /* Check the timeout counter */
+			// in the scan rsp state to be modified
       if (NRF_TIMER0->EVENTS_COMPARE[1] != 0)
       {
         NRF_TIMER0->EVENTS_COMPARE[1] = 0;
         NRF_TIMER0->INTENCLR = TIMER_INTENCLR_COMPARE1_Msk;
         
         radio_timeout_cb ();
+				//data_report_generate(1);
       }
+			
       break;
 
     case NRF_RADIO_CALLBACK_SIGNAL_TYPE_EXTEND_SUCCEEDED:

@@ -75,6 +75,7 @@ typedef enum
   SCANNER_STATE_RECEIVE_SCAN_RSP
 } m_state_t;
 
+	
 /**@brief Possible packet types
  */
 typedef enum
@@ -122,11 +123,20 @@ static uint8_t m_tx_buf[] =
   0xC3,                               // BLE Header (PDU_TYPE: SCAN_REQ, TXadd: 1 (random address), RXadd: 1 (random address)
   0x0C,                               // Length of payload: 12
   0x00,                               // Padding bits for S1 (REF: the  nRF51 reference manual 16.1.2)
-  0xDE, 0xDE, 0xDE, 0xDE, 0xDE, 0xDE, // InitAddr LSByte first
+  0xDA, 0xDB, 0xDC, 0xDD, 0xDE, 0xDF, // InitAddr LSByte first #local addr
   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // AdvAddr LSByte first
 };
 
 static uint8_t channel = 37;
+
+// protocol data
+static uint8_t SENSOR_MAX=32;
+static uint8_t sensor_adv_count=0;
+static uint32_t sensor_adv_map=0;
+static uint8_t sensor_rsp_count=0;
+static uint8_t MY_PACKET_POS2=0x12;
+static uint8_t MY_PACKET_POS4=0x34;
+static uint8_t link_rssi[31];
 
 /*****************************************************************************
 * Static Function prototypes
@@ -227,6 +237,30 @@ static void m_adv_report_generate (uint8_t * const pkt)
   nrf_report_disp_dispatch (&report);
 }
 
+void data_report_generate(uint8_t flag)
+{
+	nrf_report_t report;
+
+  btle_ev_param_le_advertising_report_t *data_report = &report.event.params.le_advertising_report_event;
+
+  report.event.event_code = BTLE_VS_EVENT_NRF_LL_EVENT_SCAN_REQ_REPORT;
+  report.event.opcode = BTLE_CMD_NONE;
+  
+  report.valid_packets = m_packets_valid;
+  report.invalid_packets = m_packets_invalid;
+  
+  data_report->num_reports = 1;
+	
+	// to be tested
+	memcpy(data_report->report_data,link_rssi,31);
+	for(uint8_t i=0;i<31;i++)
+		link_rssi[i]=0;
+	
+	data_report->event_type=flag;
+	
+	nrf_report_disp_dispatch(&report);
+}
+
 static void m_state_init_entry (void)
 {
   m_scanner.state = SCANNER_STATE_INITIALIZED;
@@ -270,6 +304,7 @@ static void m_state_receive_adv_exit (void)
 
 static void m_state_send_scan_req_entry (void)
 {
+	
   memcpy(&m_tx_buf[9], &m_rx_buf[3], 6);
   radio_buffer_configure (&m_tx_buf[0]);
   radio_tx_prepare ();
@@ -302,6 +337,51 @@ static void m_state_receive_scan_rsp_exit (void)
 * Interface Functions
 *****************************************************************************/
 
+int8_t check_adv_packet(uint8_t * const pkt)
+{
+	int8_t index=-1;
+	if (pkt[2]!=MY_PACKET_POS2 || pkt[4]!=MY_PACKET_POS4)
+		return -1;
+	uint8_t flag=0;
+	for(uint8_t i=5;i<9;i++)
+	{
+		if (pkt[i]==0)
+			index+=8;
+		else
+		{
+			uint8_t value=pkt[i];
+			for(uint8_t i=0;i<8;i++)
+			{
+				if((value&0x1)==1)
+				{
+					if (flag!=0)
+						return -1;
+					else
+					{
+						flag=1;
+						index+=i;
+						index+=1;
+					}
+				}
+				value=value>>1;
+			}
+			break;
+		}
+	}
+	return index;
+	
+}
+
+void deal_sensor_adv(uint8_t index)
+{
+	uint32_t flag=1<<index;
+	if ((sensor_adv_map&flag)==0)
+	{
+		sensor_adv_map++;
+		sensor_adv_map=sensor_adv_map|flag;
+	}
+}
+
 void ll_scan_rx_cb (bool crc_valid)
 {
   /* Received invalid packet */
@@ -329,6 +409,7 @@ void ll_scan_rx_cb (bool crc_valid)
         break;
     }
   }
+	int8_t index=-1;
   
   switch (m_scanner.state)
   {  
@@ -359,21 +440,26 @@ void ll_scan_rx_cb (bool crc_valid)
             m_state_receive_adv_entry ();
           }
           break;
+				
+					// this is the type for sensor adv
         case PACKET_TYPE_ADV_SCAN_IND:
-          m_state_receive_adv_exit ();
+					index=check_adv_packet(m_rx_buf);
+					m_state_receive_adv_exit ();
+					if (index!=-1&&index<SENSOR_MAX)
+					{
+						deal_sensor_adv(index);
+						// to be modified
+						if (sensor_adv_count==1)
+						{
+								m_state_send_scan_req_entry ();
+						}
+						else
+							m_state_receive_adv_entry ();
+					}
+					else
+						m_state_receive_adv_entry ();
           m_adv_report_generate (m_rx_buf);
 
-          /* If we're doing active scanning, prepare to send SCAN REQ, otherwise
-           * loop back around to receive a new advertisement.
-           */
-          if (m_scanner.params.scan_type == BTLE_SCAN_TYPE_ACTIVE)
-          {
-            m_state_send_scan_req_entry ();
-          }
-          else
-          {
-            m_state_receive_adv_entry ();
-          }
           break;
 
         /* These packets do not require response.

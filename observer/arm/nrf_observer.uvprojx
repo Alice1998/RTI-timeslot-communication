@@ -499,21 +499,6 @@
             </File>
           </Files>
         </Group>
-        <Group>
-          <GroupName>clock</GroupName>
-          <Files>
-            <File>
-              <FileName>board_rtc.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\clock\board_rtc.c</FilePath>
-            </File>
-            <File>
-              <FileName>board_rtc.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\..\clock\board_rtc.h</FilePath>
-            </File>
-          </Files>
-        </Group>
       </Groups>
     </Target>
     <Target>
@@ -1006,21 +991,6 @@
               <FileName>radio.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\btle_hci\scanner\radio.c</FilePath>
-            </File>
-          </Files>
-        </Group>
-        <Group>
-          <GroupName>clock</GroupName>
-          <Files>
-            <File>
-              <FileName>board_rtc.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\clock\board_rtc.c</FilePath>
-            </File>
-            <File>
-              <FileName>board_rtc.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\..\clock\board_rtc.h</FilePath>
             </File>
           </Files>
         </Group>
