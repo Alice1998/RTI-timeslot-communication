@@ -213,6 +213,21 @@ static __INLINE void scan_req_evt_dispatch(void)
 	nrf_report_disp_dispatch(&scan_req_report);
 }
 
+void generate_report(uint8_t flag)
+{
+	nrf_report_t my_report;
+	my_report.valid_packets=packet_count_valid;
+	my_report.invalid_packets=packet_count_invalid;
+	
+	my_report.event.event_code=BTLE_EVENT_LE_ADVERTISING_REPORT;
+	my_report.event.opcode=BTLE_CMD_NONE;
+	
+	my_report.event.params.le_advertising_report_event.report_data[0]=flag;
+	
+	//btle_ev_param_le_advertising_report_t 
+	nrf_report_disp_dispatch(&my_report);
+}
+
 /**
 * Short check to verify that the incomming 
 * message was a scan request for this unit
@@ -499,6 +514,7 @@ __INLINE void ctrl_signal_handler(uint8_t sig)
 						
 						if (adv_evt_done)
 						{
+							generate_report(1);
 							next_timeslot_schedule();
 						}
 						else
@@ -517,6 +533,7 @@ __INLINE void ctrl_signal_handler(uint8_t sig)
 		
 #if TS_SEND_SCAN_RSP		
 		case NRF_RADIO_CALLBACK_SIGNAL_TYPE_TIMER0:
+			generate_report(0);
 			DEBUG_PIN_POKE(5);
 
 			sm_exit_scan_req_rsp();
