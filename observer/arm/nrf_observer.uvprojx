@@ -497,6 +497,11 @@
               <FileType>1</FileType>
               <FilePath>..\..\btle_hci\scanner\radio.c</FilePath>
             </File>
+            <File>
+              <FileName>app_timer.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\btle_hci\fifo\app_timer.c</FilePath>
+            </File>
           </Files>
         </Group>
       </Groups>
@@ -991,6 +996,11 @@
               <FileName>radio.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\btle_hci\scanner\radio.c</FilePath>
+            </File>
+            <File>
+              <FileName>app_timer.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\btle_hci\fifo\app_timer.c</FilePath>
             </File>
           </Files>
         </Group>

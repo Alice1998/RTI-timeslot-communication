@@ -186,15 +186,15 @@ int main(void)
   err_code = sd_nvic_EnableIRQ(SD_EVT_IRQn);
   ASSERT (err_code == NRF_SUCCESS);
 
-  err_code = sd_nvic_SetPriority(SWI0_IRQn, NRF_APP_PRIORITY_LOW);
+  err_code = sd_nvic_SetPriority(SWI1_IRQn, NRF_APP_PRIORITY_LOW);
   ASSERT (err_code == NRF_SUCCESS);
 
-  err_code = sd_nvic_EnableIRQ(SWI0_IRQn);
+  err_code = sd_nvic_EnableIRQ(SWI1_IRQn);
   ASSERT (err_code == NRF_SUCCESS);
 
   __LOG ("Interrupts enabled");
 
-  btle_err_code = btle_scan_init (SWI0_IRQn);
+  btle_err_code = btle_scan_init (SWI1_IRQn);
   ASSERT (btle_err_code == BTLE_STATUS_CODE_SUCCESS);
   __LOG ("Scanner initialized");
 
@@ -328,7 +328,7 @@ void SD_EVT_IRQHandler (void)
 /**@brief Timeslot event interrupt
  *        Triggered whenever an event is ready to be pulled
  */
-void SWI0_IRQHandler(void)
+void SWI1_IRQHandler(void)
 {
   sw_interrupt = true;
 }

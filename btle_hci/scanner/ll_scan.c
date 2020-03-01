@@ -163,9 +163,11 @@ static void m_state_receive_scan_rsp_exit (void);
 
 
 app_timer_id_t my_timer;
+uint32_t app_timer_counter=0;
 static void my_timer_handler(void * p_context)
 {
-    //nrf_gpio_pin_toggle(18);
+	data_report_generate(app_timer_counter);
+	app_timer_counter+=1;
 
 }
 
@@ -548,13 +550,20 @@ void ll_scan_timeout_cb (void)
       break;
   }
 }
-
+void app_error_handler(uint32_t error_code,uint32_t line_num,const uint8_t * p_file_name)
+{
+	
+}
 btle_status_codes_t ll_scan_init (void)
 {
-  APP_TIMER_INIT(APP_TIMER_PRESCALER, APP_TIMER_MAX_TIMERS, APP_TIMER_OP_QUEUE_SIZE, false);
-  app_timer_create(&my_timer, APP_TIMER_MODE_REPEATED, my_timer_handler);
-  app_timer_start(my_timer, APP_TIMER_TICKS(100, APP_TIMER_PRESCALER), NULL);
 
+  //APP_TIMER_INIT(APP_TIMER_PRESCALER, APP_TIMER_MAX_TIMERS, APP_TIMER_OP_QUEUE_SIZE, false);
+	APP_TIMER_INIT(0,2,2,NULL);
+  uint8_t err_code=app_timer_create(&my_timer, APP_TIMER_MODE_REPEATED, my_timer_handler);
+	APP_ERROR_CHECK(err_code); 
+  err_code=app_timer_start(my_timer,APP_TIMER_TICKS(1000,0),NULL);
+	APP_ERROR_CHECK(err_code);
+	
   m_scanner.state = SCANNER_STATE_NOT_INITIALIZED;
   
   m_state_init_entry ();

@@ -108,7 +108,7 @@ nrf_radio_signal_callback_return_param_t *radio_cb (uint8_t sig)
 			if (FLAG==20)
 			{
 				FLAG=0;
-				data_report_generate(0);
+				//data_report_generate(0);
 				
 			}
       /* Check the timeslot cleanup counter */
