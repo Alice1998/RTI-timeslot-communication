@@ -336,9 +336,16 @@ static void m_state_receive_scan_rsp_entry (void)
   memset ((void *) m_rx_buf, '\0', RX_BUF_SIZE);
   radio_buffer_configure (&m_rx_buf[0]);
   // here wait for 149 us (micro second)
-  radio_rx_prepare (false);
+  //radio_rx_prepare (false);
+  radio_rx_prepare(true);
   radio_rssi_enable ();
-  radio_rx_timeout_enable ();
+  //radio_rx_timeout_enable (); add below to be tested
+
+  /* Only go directly to TX if we're doing active scanning */
+  if (m_scanner.params.scan_type == BTLE_SCAN_TYPE_ACTIVE)
+  {
+    radio_tx_mode_on_receipt ();
+  }
   
   m_scanner.state = SCANNER_STATE_RECEIVE_SCAN_RSP;
 }
@@ -442,20 +449,21 @@ void ll_scan_rx_cb (bool crc_valid)
         case PACKET_TYPE_ADV_IND:
 					
           m_state_receive_adv_exit ();
-
           m_adv_report_generate (m_rx_buf);
 
           /* If we're doing active scanning, prepare to send SCAN REQ, otherwise
            * loop back around to receive a new advertisement.
            */
+          /*
           if (m_scanner.params.scan_type == BTLE_SCAN_TYPE_ACTIVE)
           {
             m_state_send_scan_req_entry ();
           }
           else
           {
+            */
             m_state_receive_adv_entry ();
-          }
+         //}
           break;
 				
 					// this is the type for sensor adv
@@ -467,12 +475,7 @@ void ll_scan_rx_cb (bool crc_valid)
 					{
 						deal_sensor_adv(index);
 						// to be modified
-						if (sensor_adv_count==1)
-						{
-								m_state_send_scan_req_entry ();
-						}
-						else
-							m_state_receive_adv_entry ();
+						m_state_receive_adv_entry ();
 					}
 					else
 						m_state_receive_adv_entry ();
@@ -528,6 +531,7 @@ void ll_scan_tx_cb (void)
     case SCANNER_STATE_SEND_REQ:
       // sync here!! to be modified
       m_state_send_scan_req_exit ();
+      
       m_state_receive_scan_rsp_entry ();
       break;
 
@@ -543,13 +547,34 @@ void ll_scan_timeout_cb (void)
     case SCANNER_STATE_RECEIVE_SCAN_RSP:
       m_state_receive_scan_rsp_exit ();
       radio_disable ();
-      m_state_receive_adv_entry ();
+      //m_state_receive_adv_entry ();
+      // might be scan req
+      m_state_receive_scan_rsp_entry();
       break;
 
     default:
       break;
   }
 }
+
+void send_req_for_sync(void)
+{
+  switch (m_scanner.state)
+  {
+  case SCANNER_STATE_RECEIVE_ADV:
+    m_state_receive_adv_exit();
+    break;
+
+  case SCANNER_STATE_RECEIVE_SCAN_RSP:
+    m_state_receive_scan_rsp_exit();
+    break;
+
+  default:
+    break;
+  }
+  m_state_send_scan_req_entry();
+}
+
 void app_error_handler(uint32_t error_code,uint32_t line_num,const uint8_t * p_file_name)
 {
 	
