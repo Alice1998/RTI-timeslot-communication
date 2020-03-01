@@ -42,6 +42,8 @@
 #include <stdint.h>
 #include <string.h>
 
+#include "app_timer.h"
+
 /*****************************************************************************
 * Local definitions
 *****************************************************************************/
@@ -158,6 +160,14 @@ static void m_state_receive_scan_rsp_exit (void);
 /*****************************************************************************
 * Static Function definitions
 *****************************************************************************/
+
+
+app_timer_id_t my_timer;
+static void my_timer_handler(void * p_context)
+{
+    //nrf_gpio_pin_toggle(18);
+
+}
 
 static void m_adv_report_generate (uint8_t * const pkt)
 {
@@ -285,6 +295,7 @@ static void m_state_receive_adv_entry (void)
 {
   memset ((void *) m_rx_buf, '\0', RX_BUF_SIZE);
   radio_buffer_configure (&m_rx_buf[0]);
+  // immediate
   radio_rx_prepare (true);
   radio_rssi_enable ();
  
@@ -307,6 +318,7 @@ static void m_state_send_scan_req_entry (void)
 	
   memcpy(&m_tx_buf[9], &m_rx_buf[3], 6);
   radio_buffer_configure (&m_tx_buf[0]);
+  // 149 us
   radio_tx_prepare ();
   
   m_scanner.state = SCANNER_STATE_SEND_REQ;
@@ -321,6 +333,7 @@ static void m_state_receive_scan_rsp_entry (void)
 {
   memset ((void *) m_rx_buf, '\0', RX_BUF_SIZE);
   radio_buffer_configure (&m_rx_buf[0]);
+  // here wait for 149 us (micro second)
   radio_rx_prepare (false);
   radio_rssi_enable ();
   radio_rx_timeout_enable ();
@@ -402,7 +415,9 @@ void ll_scan_rx_cb (bool crc_valid)
       
         m_state_receive_scan_rsp_exit ();
         radio_disable ();
-        m_state_receive_adv_entry ();
+        // modified state machine
+        //m_state_receive_adv_entry ();
+        m_state_receive_scan_rsp_entry();
         break;
 
       default:
@@ -445,6 +460,7 @@ void ll_scan_rx_cb (bool crc_valid)
         case PACKET_TYPE_ADV_SCAN_IND:
 					index=check_adv_packet(m_rx_buf);
 					m_state_receive_adv_exit ();
+          // test: radio disabled?
 					if (index!=-1&&index<SENSOR_MAX)
 					{
 						deal_sensor_adv(index);
@@ -491,8 +507,8 @@ void ll_scan_rx_cb (bool crc_valid)
 
       m_state_receive_scan_rsp_exit ();
       m_adv_report_generate (m_rx_buf);
-
-      m_state_receive_adv_entry ();
+      //m_state_receive_adv_entry ();
+      m_state_receive_scan_rsp_entry();
       break;
 
     default:
@@ -507,8 +523,8 @@ void ll_scan_tx_cb (void)
     /* SCAN_REQ has been transmitted, and we must configure the radio to
      * listen for the incoming SCAN_RSP.
      */
-		// to be modified here
     case SCANNER_STATE_SEND_REQ:
+      // sync here!! to be modified
       m_state_send_scan_req_exit ();
       m_state_receive_scan_rsp_entry ();
       break;
@@ -535,6 +551,10 @@ void ll_scan_timeout_cb (void)
 
 btle_status_codes_t ll_scan_init (void)
 {
+  APP_TIMER_INIT(APP_TIMER_PRESCALER, APP_TIMER_MAX_TIMERS, APP_TIMER_OP_QUEUE_SIZE, false);
+  app_timer_create(&my_timer, APP_TIMER_MODE_REPEATED, my_timer_handler);
+  app_timer_start(my_timer, APP_TIMER_TICKS(100, APP_TIMER_PRESCALER), NULL);
+
   m_scanner.state = SCANNER_STATE_NOT_INITIALIZED;
   
   m_state_init_entry ();
