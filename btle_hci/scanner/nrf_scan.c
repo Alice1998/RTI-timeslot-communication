@@ -73,10 +73,11 @@ static nrf_radio_request_t m_timeslot_req_normal = {
   .params.normal = {
     NRF_RADIO_HFCLK_CFG_DEFAULT,
     NRF_RADIO_PRIORITY_NORMAL,
-    0,
-		0
+    100000,
+		100000,
   }
 };
+uint8_t FLAG=0;
 
 /*****************************************************************************
 * Static Functions
@@ -103,6 +104,13 @@ nrf_radio_signal_callback_return_param_t *radio_cb (uint8_t sig)
       break;
 
     case NRF_RADIO_CALLBACK_SIGNAL_TYPE_TIMER0:
+			FLAG+=1;
+			if (FLAG==20)
+			{
+				FLAG=0;
+				data_report_generate(0);
+				
+			}
       /* Check the timeslot cleanup counter */
       if (NRF_TIMER0->EVENTS_COMPARE[0] != 0)
       {
