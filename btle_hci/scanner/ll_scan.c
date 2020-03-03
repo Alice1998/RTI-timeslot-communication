@@ -63,7 +63,8 @@
 
 /**@brief Packet buffer size
  */
-#define RX_BUF_SIZE 37
+//3 6 31
+#define RX_BUF_SIZE 40
 
 /**@brief Possible scanner states
  */

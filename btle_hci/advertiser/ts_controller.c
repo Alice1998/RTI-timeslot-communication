@@ -73,7 +73,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define INDEX 1
 
 /* Buffer for advertisement data */
-static uint8_t ble_adv_data[BLE_ADDR_OFFSET + BLE_ADDR_LEN + BLE_PAYLOAD_MAXLEN];
+static uint8_t adv_data_local[BLE_ADDR_OFFSET + BLE_ADDR_LEN + BLE_PAYLOAD_MAXLEN];
 
 #if TS_SEND_SCAN_RSP
 /* Buffer for scan response data, only available in scan request/response mode,
@@ -249,7 +249,7 @@ static bool is_scan_req_for_me(void)
 		return false;
 	}
 	/* check included ADV addr, which must match own ADV addr */
-	if (memcmp(	(void*) &ble_adv_data[BLE_ADDR_OFFSET], 
+	if (memcmp(	(void*) &adv_data_local[BLE_ADDR_OFFSET], 
 							(void*) &ble_rx_buf[BLE_PAYLOAD_OFFSET], BLE_ADDR_LEN) != 0)
 	{
 		return false;
@@ -314,7 +314,7 @@ static void sm_enter_adv_send(void)
 	/* trigger task early, the rest of the setup can be done in RXRU */
 	PERIPHERAL_TASK_TRIGGER(NRF_RADIO->TASKS_TXEN);
 	
-	periph_radio_packet_ptr_set(&ble_adv_data[0]);
+	periph_radio_packet_ptr_set(&adv_data_local[0]);
 	
 #if TS_SEND_SCAN_RSP
 	periph_radio_shorts_set(	RADIO_SHORTS_READY_START_Msk | 
@@ -428,28 +428,28 @@ void ctrl_init(void)
 	that is in line with BLE spec */
 	
 	/* erase package buffers */
-	memset(&ble_adv_data[0], 0, 40);
+	memset(&adv_data_local[0], 0, 40);
 #if TS_SEND_SCAN_RSP	
 	memset(&ble_scan_rsp_data[0], 0, 40);
 #endif 
 	
 #if TS_SEND_SCAN_RSP	
 	/* set message type to ADV_IND_DISC, RANDOM in type byte of adv data */
-	ble_adv_data[BLE_TYPE_OFFSET] = 0x46;
+	adv_data_local[BLE_TYPE_OFFSET] = 0x46;
 	/* set message type to SCAN_RSP, RANDOM in type byte of scan rsp data */
 	ble_scan_rsp_data[BLE_TYPE_OFFSET] = 0x44;
 #else
 	/* set message type to ADV_IND_NONCONN, RANDOM in type byte of adv data */
-	ble_adv_data[BLE_TYPE_OFFSET] = 0x42;
+	adv_data_local[BLE_TYPE_OFFSET] = 0x42;
 #endif
 	
 
-	ble_adv_data[BLE_ADFLAG_OFFSET]  = 0x00;
-	//ble_adv_data[BLE_ADFLAG_OFFSET] |= (1 << 1);  /* General discoverable mode */
-  ble_adv_data[BLE_ADFLAG_OFFSET] |= (1 << 2);    /* BR/EDR not supported      */
+	adv_data_local[BLE_ADFLAG_OFFSET]  = 0x00;
+	//adv_data_local[BLE_ADFLAG_OFFSET] |= (1 << 1);  /* General discoverable mode */
+  adv_data_local[BLE_ADFLAG_OFFSET] |= (1 << 2);    /* BR/EDR not supported      */
 
 	/* set message length to only address */
-	ble_adv_data[BLE_SIZE_OFFSET] 			= 0x06;
+	adv_data_local[BLE_SIZE_OFFSET] 			= 0x06;
 #if TS_SEND_SCAN_RSP
 	ble_scan_rsp_data[BLE_SIZE_OFFSET] 	= 0x06;
 #endif	
@@ -581,9 +581,10 @@ bool ctrl_adv_param_set(btle_cmd_param_le_write_advertising_parameters_t* adv_pa
 	/* put address into advertisement packet buffer */
 	//static uint8_t ble_addr[] = 000000;
 	// copied from main.c
-	static uint8_t ble_addr[] = {0x4e, 0x6f, 0x72, 0x64, 0x69, 0x63};
-		//DEFAULT_DEVICE_ADDRESS;
-	memcpy((void*) &ble_adv_data[BLE_ADDR_OFFSET],
+	//static uint8_t ble_addr[] = {0x4e, 0x6f, 0x72, 0x64, 0x69, 0x63};
+	static uint8_t ble_addr[] = {0xa0, 0xa1, 0xa2, 0xa3, 0xa4, 0xa5};
+	//DEFAULT_DEVICE_ADDRESS;
+	memcpy((void*) &adv_data_local[BLE_ADDR_OFFSET],
 				 (void*) &ble_addr[0], BLE_ADDR_LEN);
 
 #if TS_SEND_SCAN_RSP
@@ -593,8 +594,8 @@ bool ctrl_adv_param_set(btle_cmd_param_le_write_advertising_parameters_t* adv_pa
 #endif
 	
 	/* address type */
-	ble_adv_data[BLE_TYPE_OFFSET] &= BLE_ADDR_TYPE_MASK;
-	ble_adv_data[BLE_TYPE_OFFSET] |= (adv_params->own_address_type) << 6;
+	adv_data_local[BLE_TYPE_OFFSET] &= BLE_ADDR_TYPE_MASK;
+	adv_data_local[BLE_TYPE_OFFSET] |= (adv_params->own_address_type) << 6;
 #if TS_SEND_SCAN_RSP
 	ble_scan_rsp_data[BLE_TYPE_OFFSET] &= BLE_ADDR_TYPE_MASK;
 	ble_scan_rsp_data[BLE_TYPE_OFFSET] |= (adv_params->own_address_type) << 6;
@@ -617,16 +618,16 @@ bool ctrl_adv_param_set(btle_cmd_param_le_write_advertising_parameters_t* adv_pa
 
 #if TS_SEND_SCAN_RSP	
 	/* adv type */
-	ble_adv_data[BLE_TYPE_OFFSET] &= ~BLE_TYPE_MASK;
-	ble_adv_data[BLE_TYPE_OFFSET] |= (ble_adv_type_raw[adv_params->type] & BLE_TYPE_MASK);
+	adv_data_local[BLE_TYPE_OFFSET] &= ~BLE_TYPE_MASK;
+	adv_data_local[BLE_TYPE_OFFSET] |= (ble_adv_type_raw[adv_params->type] & BLE_TYPE_MASK);
 
 	/* scan rsp type */
 	ble_scan_rsp_data[BLE_TYPE_OFFSET] &= ~BLE_TYPE_MASK;
 	ble_scan_rsp_data[BLE_TYPE_OFFSET] |= 0x04;
 #else
 	/* adv type is locked to nonconn */
-	ble_adv_data[BLE_TYPE_OFFSET] &= ~BLE_TYPE_MASK;
-	ble_adv_data[BLE_TYPE_OFFSET] |= (ble_adv_type_raw[BTLE_ADV_TYPE_NONCONN_IND] & BLE_TYPE_MASK);
+	adv_data_local[BLE_TYPE_OFFSET] &= ~BLE_TYPE_MASK;
+	adv_data_local[BLE_TYPE_OFFSET] |= (ble_adv_type_raw[BTLE_ADV_TYPE_NONCONN_IND] & BLE_TYPE_MASK);
 #endif
 	return true;
 }
@@ -652,12 +653,12 @@ bool ctrl_adv_data_set(btle_cmd_param_le_write_advertising_data_t* adv_data)
 									BLE_PAYLOAD_MAXLEN);
 
 	/* put into packet buffer */
-	memcpy((void*) &ble_adv_data[BLE_PAYLOAD_OFFSET], 
+	memcpy((void*) &adv_data_local[BLE_PAYLOAD_OFFSET], 
 					(void*) &adv_data->advertising_data[0], len);
 
 	/* set length of packet in length byte. Account for 6 address bytes */
-	ble_adv_data[BLE_SIZE_OFFSET] &= 0x00;
-	ble_adv_data[BLE_SIZE_OFFSET] = (BLE_ADDR_LEN + len);
+	adv_data_local[BLE_SIZE_OFFSET] &= 0x00;
+	adv_data_local[BLE_SIZE_OFFSET] = (BLE_ADDR_LEN + len);
 
 	return true;
 }
