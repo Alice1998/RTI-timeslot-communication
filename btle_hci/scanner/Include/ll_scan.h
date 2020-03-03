@@ -40,11 +40,11 @@
 #include <stdbool.h>
 
 // add
-bool all_sensor_started();
+bool all_sensor_started(void);
 void send_req_for_sync(void);
 
-int8_t check_adv_packet(uint8_t * const pkt);
-void data_report_generate(uint8_t flag);
+int8_t get_packet_index(uint8_t * const pkt);
+void data_report_generate(uint8_t flag,char * const pkt,uint8_t pkt_size);
 
 /** @brief Callback for events on the radio */
 void ll_scan_rx_cb (bool crc_valid);

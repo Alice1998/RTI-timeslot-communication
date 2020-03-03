@@ -144,9 +144,6 @@ static uint8_t sensor_adv_count=0;
 static uint8_t sync_flag=0; // to be modified!!
 
 
-static uint8_t TEST_LOG_SIZE;
-static uint8_t TEST_LOG[20];
-
 
 /*****************************************************************************
 * Static Function prototypes
@@ -263,7 +260,7 @@ static void m_adv_report_generate (uint8_t * const pkt)
   nrf_report_disp_dispatch (&report);
 }
 
-void data_report_generate(uint8_t flag,uint8_t const * pkt)
+void data_report_generate(uint8_t flag,char *const pkt,uint8_t pkt_size)
 {
 	nrf_report_t report;
 
@@ -285,7 +282,8 @@ void data_report_generate(uint8_t flag,uint8_t const * pkt)
 	*/
 
 	data_report->event_type=flag;
-  memcpy(data_report->report_data,pkt,TEST_LOG_SIZE)
+  memcpy(data_report->report_data,pkt,pkt_size);
+	
 	
 	nrf_report_disp_dispatch(&report);
 }
@@ -323,8 +321,17 @@ static void m_state_receive_adv_entry (void)
   {
     radio_tx_mode_on_receipt ();
   }
-  
+  uint8_t change_flag=1;
+	if (m_scanner.state!=SCANNER_STATE_RECEIVE_ADV)
+		change_flag=0;
   m_scanner.state = SCANNER_STATE_RECEIVE_ADV;
+	if(change_flag)
+		return;
+	if(sync_flag)
+		data_report_generate(m_scanner.state,"enter_rsp_scan",sizeof("enter_rsp_scan"));
+	else
+		data_report_generate(m_scanner.state,"enter_adv_scan",sizeof("enter_adv_scan"));
+		
 }
 
 static void m_state_receive_adv_exit (void)
@@ -341,13 +348,14 @@ static void m_state_send_scan_req_entry (void)
   radio_tx_prepare ();
   
   m_scanner.state = SCANNER_STATE_SEND_REQ;
-  data_report_generate(m_scanner.state,"enter_send_req");
+	char* LOG_DATA="enter_send_req";
+  data_report_generate(m_scanner.state,LOG_DATA,sizeof("enter_send_req"));
 }
 
 static void m_state_send_scan_req_exit (void)
 {
   /* Nothing to do */
-  data_report_generate(m_scanner.state,"exit_send_req");
+  data_report_generate(m_scanner.state,"exit_send_req",sizeof("exit_send_req"));
 }
 
 static void m_state_receive_scan_rsp_entry (void)
@@ -367,13 +375,13 @@ static void m_state_receive_scan_rsp_entry (void)
   }
   
   m_scanner.state = SCANNER_STATE_RECEIVE_SCAN_RSP;
-  data_report_generate(m_scanner.state,"enter_receive_rsp");
+  data_report_generate(m_scanner.state,"enter_receive_rsp",sizeof("enter_receive_rsp"));
 }
 
 static void m_state_receive_scan_rsp_exit (void)
 {
   m_rssi = radio_rssi_get ();
-   data_report_generate(m_scanner.state,"exit_receive_rsp");
+   data_report_generate(m_scanner.state,"exit_receive_rsp",sizeof("exit_receive_rsp"));
 }
 
 /*****************************************************************************
@@ -413,17 +421,14 @@ int8_t get_packet_index(uint8_t * const pkt)
 	
 }
 
-int8_t check_rsp_pkt()
-{
-
-}
 
 void deal_sensor_adv(uint8_t index)
 {
+	m_adv_report_generate (m_rx_buf);
 	uint32_t flag=1<<index;
 	if ((sensor_adv_map&flag)==0)
 	{
-		m_adv_report_generate (m_rx_buf);
+		data_report_generate(index,"---a_new_sensor_enters---",sizeof("---a_new_sensor_enters---"));
 		sensor_adv_count++;
 		sensor_adv_map=sensor_adv_map|flag;
 	}
@@ -431,7 +436,7 @@ void deal_sensor_adv(uint8_t index)
 
 bool all_sensor_started()
 {
-	if (sensor_adv_count==1&&sync_flag==0)
+	if (sensor_adv_count==2&&sync_flag==0)
 	{
 		sync_flag=1;
 		return true;
@@ -515,7 +520,7 @@ void ll_scan_rx_cb (bool crc_valid)
           m_state_receive_adv_exit ();
           if (memcmp((void*)MY_ADV_PACKET_POS0_POS4,(void*)m_rx_buf,5)==0)
           {
-            index=check_adv_packet(m_rx_buf);
+            index=get_packet_index(m_rx_buf);
             if (index!=-1&&index<SENSOR_MAX)
             {
               deal_sensor_adv(index);
@@ -568,8 +573,7 @@ void ll_scan_tx_cb (void)
   if(sync_flag==1)
   {
     // just send the req
-    TEST_LOG="sync_flag=1_just_send_req_into_scan";
-    data_packet_generate(m_scanner.state,TEST_LOG)
+    data_report_generate(m_scanner.state,"sync_flag=1_just_send_req_into_scan",sizeof("sync_flag=1_just_send_req_into_scan"));
     m_state_send_scan_req_exit ();
     m_state_receive_adv_entry();
   }
@@ -618,8 +622,7 @@ void ll_scan_timeout_cb (void)
 
 void send_req_for_sync(void)
 {
-  TEST_LOG="in_sync_func:state"
-  data_report_generate(m_scanner.state,TEST_LOG);
+  data_report_generate(m_scanner.state,"in_sync_func:state",sizeof("in_sync_func:state"));
   if(sync_flag==1)
   {
     m_state_receive_adv_exit();
