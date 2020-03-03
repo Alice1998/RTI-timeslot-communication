@@ -589,8 +589,9 @@ bool ctrl_adv_param_set(btle_cmd_param_le_write_advertising_parameters_t* adv_pa
 
 #if TS_SEND_SCAN_RSP
 	/* put address into scan response packet buffer */
+	//memcpy((void*) &ble_scan_rsp_data[BLE_ADDR_OFFSET],(void*) &adv_params->direct_address[0], BLE_ADDR_LEN);
 	memcpy((void*) &ble_scan_rsp_data[BLE_ADDR_OFFSET], 
-					(void*) &adv_params->direct_address[0], BLE_ADDR_LEN);
+					(void*) &ble_addr[0], BLE_ADDR_LEN);
 #endif
 	
 	/* address type */

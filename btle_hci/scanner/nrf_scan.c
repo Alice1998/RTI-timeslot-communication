@@ -99,7 +99,6 @@ nrf_radio_signal_callback_return_param_t *radio_cb (uint8_t sig)
       break;
 
     case NRF_RADIO_CALLBACK_SIGNAL_TYPE_RADIO:
-			data_report_generate(0x20);
       radio_event_cb ();
       break;
 
@@ -108,7 +107,6 @@ nrf_radio_signal_callback_return_param_t *radio_cb (uint8_t sig)
       /* Check the timeslot cleanup counter */
       if (NRF_TIMER0->EVENTS_COMPARE[0] != 0)
       {
-				//data_report_generate(0);
         ll_scan_stop ();
         // to be modified
         if(all_sensor_started())

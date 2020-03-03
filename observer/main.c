@@ -248,7 +248,8 @@ int main(void)
 							
 							//RSSI Data current debug
 					case BTLE_VS_EVENT_NRF_LL_EVENT_SCAN_REQ_REPORT:
-						__LOG("type %X",report.event.params.le_advertising_report_event.event_type);
+						__LOG("type %X, info: %s",report.event.params.le_advertising_report_event.event_type,
+                  report.event.params.le_advertising_report_event.report_data);
 						/*for(uint8_t j=0;j<report.event.params.le_advertising_report_event.length_data;j++)
 						{
 							__LOG("%X",report.event.params.le_advertising_report_event.report_data[j]);

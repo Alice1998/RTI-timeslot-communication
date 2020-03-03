@@ -137,10 +137,15 @@ static uint8_t SENSOR_MAX=32;
 
 static uint32_t sensor_adv_map=0;
 static uint8_t sensor_rsp_count=0;
-static uint8_t MY_PACKET_POS0_POS4[]={0x46,0x1E,0x00,0x30,0x30};
+static uint8_t MY_ADV_PACKET_POS0_POS4[]={0x46,0x1E,0x00,0x30,0x30};
+static uint8_t MY_RSP_PACKET_POS0_POS4[]={0x44,0x25,0x00,0x30,0x30};
 static uint8_t link_rssi[31];
 static uint8_t sensor_adv_count=0;
 static uint8_t sync_flag=0; // to be modified!!
+
+
+static uint8_t TEST_LOG_SIZE;
+static uint8_t TEST_LOG[20];
 
 
 /*****************************************************************************
@@ -170,7 +175,6 @@ uint32_t app_timer_counter=0;
 
 static void my_timer_handler(void * p_context)
 {
-	//data_report_generate(app_timer_counter);
 	app_timer_counter+=1;
 }
 
@@ -224,7 +228,6 @@ static void m_adv_report_generate (uint8_t * const pkt)
       break;
     
     default:
-			//data_report_generate(6);
       return;
   }
   
@@ -260,7 +263,7 @@ static void m_adv_report_generate (uint8_t * const pkt)
   nrf_report_disp_dispatch (&report);
 }
 
-void data_report_generate(uint8_t flag)
+void data_report_generate(uint8_t flag,uint8_t const * pkt)
 {
 	nrf_report_t report;
 
@@ -275,11 +278,14 @@ void data_report_generate(uint8_t flag)
   data_report->num_reports = 1;
 	
 	// to be tested
+  /*
 	memcpy(data_report->report_data,link_rssi,31);
 	for(uint8_t i=0;i<31;i++)
 		link_rssi[i]=0;
-	
+	*/
+
 	data_report->event_type=flag;
+  memcpy(data_report->report_data,pkt,TEST_LOG_SIZE)
 	
 	nrf_report_disp_dispatch(&report);
 }
@@ -335,12 +341,13 @@ static void m_state_send_scan_req_entry (void)
   radio_tx_prepare ();
   
   m_scanner.state = SCANNER_STATE_SEND_REQ;
-	data_report_generate(m_scanner.state);
+  data_report_generate(m_scanner.state,"enter_send_req");
 }
 
 static void m_state_send_scan_req_exit (void)
 {
   /* Nothing to do */
+  data_report_generate(m_scanner.state,"exit_send_req");
 }
 
 static void m_state_receive_scan_rsp_entry (void)
@@ -360,23 +367,22 @@ static void m_state_receive_scan_rsp_entry (void)
   }
   
   m_scanner.state = SCANNER_STATE_RECEIVE_SCAN_RSP;
-	data_report_generate(m_scanner.state);
+  data_report_generate(m_scanner.state,"enter_receive_rsp");
 }
 
 static void m_state_receive_scan_rsp_exit (void)
 {
   m_rssi = radio_rssi_get ();
+   data_report_generate(m_scanner.state,"exit_receive_rsp");
 }
 
 /*****************************************************************************
 * Interface Functions
 *****************************************************************************/
 
-int8_t check_adv_packet(uint8_t * const pkt)
+int8_t get_packet_index(uint8_t * const pkt)
 {
 	int8_t index=-1;
-	if (memcmp((void*)MY_PACKET_POS0_POS4,(void*)pkt,5)!=0)
-		return -1;
 	uint8_t flag=0;
 	for(uint8_t i=5;i<9;i++)
 	{
@@ -407,6 +413,11 @@ int8_t check_adv_packet(uint8_t * const pkt)
 	
 }
 
+int8_t check_rsp_pkt()
+{
+
+}
+
 void deal_sensor_adv(uint8_t index)
 {
 	uint32_t flag=1<<index;
@@ -420,7 +431,6 @@ void deal_sensor_adv(uint8_t index)
 
 bool all_sensor_started()
 {
-	data_report_generate(m_scanner.state);
 	if (sensor_adv_count==1&&sync_flag==0)
 	{
 		sync_flag=1;
@@ -437,31 +447,6 @@ void ll_scan_rx_cb (bool crc_valid)
     switch(m_scanner.state)
     {
       case SCANNER_STATE_RECEIVE_ADV:
-			/*
-			data_report_generate(m_rx_buf[0]);
-				if ((m_rx_buf[0]&0xF)==PACKET_TYPE_ADV_SCAN_IND)
-				{
-					int8_t index=check_adv_packet(m_rx_buf);
-					m_state_receive_adv_exit ();
-					radio_disable();
-					if (index!=-1&&index<SENSOR_MAX)
-					{
-						m_packets_valid++;
-						deal_sensor_adv(index);
-					}
-					else
-						m_packets_invalid++;
-					m_state_receive_adv_entry ();
-				}
-				else
-				{
-					m_packets_invalid++;
-      
-					m_state_receive_adv_exit ();
-					radio_disable ();
-					m_state_receive_adv_entry ();
-				}
-				*/
 				m_packets_invalid++;
 				m_state_receive_adv_exit ();
 				radio_disable ();
@@ -490,7 +475,15 @@ void ll_scan_rx_cb (bool crc_valid)
     /* Packet received */
     case SCANNER_STATE_RECEIVE_ADV:
       m_packets_valid++;
-    
+
+      if(sync_flag==1)
+      {
+        m_state_receive_adv_exit();
+			  if (memcmp((void*)m_rx_buf,(void*)MY_RSP_PACKET_POS0_POS4,5)==0)
+				  m_adv_report_generate (m_rx_buf);
+        m_state_receive_adv_entry ();
+      }
+      else
       switch (m_rx_buf[0] & 0x0F)
       {
         /* If active scanning is enabled, these packets should be reponded to with
@@ -519,17 +512,15 @@ void ll_scan_rx_cb (bool crc_valid)
 				
 					// this is the type for sensor adv
         case PACKET_TYPE_ADV_SCAN_IND:
-					index=check_adv_packet(m_rx_buf);
-					m_state_receive_adv_exit ();
-					//radio_disable();
-          // test: radio disabled?
-					if (index!=-1&&index<SENSOR_MAX)
-					{
-						deal_sensor_adv(index);
-						//m_adv_report_generate (m_rx_buf);
-					}
-					else
-						radio_disable();
+          m_state_receive_adv_exit ();
+          if (memcmp((void*)MY_ADV_PACKET_POS0_POS4,(void*)m_rx_buf,5)==0)
+          {
+            index=check_adv_packet(m_rx_buf);
+            if (index!=-1&&index<SENSOR_MAX)
+            {
+              deal_sensor_adv(index);
+            }
+          }
 					m_state_receive_adv_entry ();
           break;
 
@@ -561,7 +552,7 @@ void ll_scan_rx_cb (bool crc_valid)
       m_packets_valid++;
 
       m_state_receive_scan_rsp_exit ();
-			if (memcmp((void*)m_rx_buf,(void*)MY_PACKET_POS0_POS4,5)!=0)
+			if (memcmp((void*)m_rx_buf,(void*)MY_RSP_PACKET_POS0_POS4,5)==0)
 				m_adv_report_generate (m_rx_buf);
       //m_state_receive_adv_entry ();
       m_state_receive_scan_rsp_entry();
@@ -574,6 +565,15 @@ void ll_scan_rx_cb (bool crc_valid)
 
 void ll_scan_tx_cb (void)
 {
+  if(sync_flag==1)
+  {
+    // just send the req
+    TEST_LOG="sync_flag=1_just_send_req_into_scan";
+    data_packet_generate(m_scanner.state,TEST_LOG)
+    m_state_send_scan_req_exit ();
+    m_state_receive_adv_entry();
+  }
+  else
     switch (m_scanner.state)
   {
     /* SCAN_REQ has been transmitted, and we must configure the radio to
@@ -582,8 +582,8 @@ void ll_scan_tx_cb (void)
     case SCANNER_STATE_SEND_REQ:
       // sync here!! to be modified
       m_state_send_scan_req_exit ();
-      data_report_generate(10);
-      m_state_receive_scan_rsp_entry ();
+      //m_state_receive_scan_rsp_entry ();
+      m_state_receive_adv_exit();
       break;
 
     default:
@@ -593,41 +593,51 @@ void ll_scan_tx_cb (void)
 
 void ll_scan_timeout_cb (void)
 {
-	data_report_generate(12);
-	data_report_generate(m_scanner.state);
-  switch (m_scanner.state)
+  if(sync_flag==1)
   {
-    case SCANNER_STATE_RECEIVE_SCAN_RSP:
-      m_state_receive_scan_rsp_exit ();
-      radio_disable ();
-      //m_state_receive_adv_entry ();
-      // might be scan req
-			data_report_generate(11);
-      m_state_receive_scan_rsp_entry();
-      break;
-
-    default:
-      break;
+    m_state_receive_adv_exit ();
+      //radio_disable ();
+      m_state_receive_adv_entry ();
   }
+  else
+    switch (m_scanner.state)
+    {
+      case SCANNER_STATE_RECEIVE_SCAN_RSP:
+        m_state_receive_scan_rsp_exit ();
+        //radio_disable ();
+        m_state_receive_adv_entry ();
+        // might be scan req
+        //m_state_receive_scan_rsp_entry();
+
+        break;
+
+      default:
+        break;
+    }
 }
 
 void send_req_for_sync(void)
 {
-  switch (m_scanner.state)
+  TEST_LOG="in_sync_func:state"
+  data_report_generate(m_scanner.state,TEST_LOG);
+  if(sync_flag==1)
   {
-  case SCANNER_STATE_RECEIVE_ADV:
-		data_report_generate(0x40);
     m_state_receive_adv_exit();
-    break;
-
-  case SCANNER_STATE_RECEIVE_SCAN_RSP:
-		data_report_generate(0x41);
-    m_state_receive_scan_rsp_exit();
-    break;
-
-  default:
-    break;
   }
+  else
+    switch (m_scanner.state)
+    {
+    case SCANNER_STATE_RECEIVE_ADV:
+      m_state_receive_adv_exit();
+      break;
+
+    case SCANNER_STATE_RECEIVE_SCAN_RSP:
+      m_state_receive_scan_rsp_exit();
+      break;
+
+    default:
+      break;
+    }
   m_state_send_scan_req_entry();
 }
 
