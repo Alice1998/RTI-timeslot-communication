@@ -40,6 +40,9 @@
 #include <stdbool.h>
 
 // add
+static uint8_t sensor_adv_count=0;
+void send_req_for_sync(void);
+
 int8_t check_adv_packet(uint8_t * const pkt);
 void data_report_generate(uint8_t flag);
 

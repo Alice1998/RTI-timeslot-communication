@@ -110,7 +110,7 @@ nrf_radio_signal_callback_return_param_t *radio_cb (uint8_t sig)
 				//data_report_generate(0);
         ll_scan_stop ();
         // to be modified
-        if(sensor_adv_count==1)
+        if(sensor_adv_count==30)
         {
           send_req_for_sync();
         }

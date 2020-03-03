@@ -133,12 +133,13 @@ static uint8_t channel = 37;
 
 // protocol data
 static uint8_t SENSOR_MAX=32;
-static uint8_t sensor_adv_count=0;
+
 static uint32_t sensor_adv_map=0;
 static uint8_t sensor_rsp_count=0;
 static uint8_t MY_PACKET_POS2=0x12;
 static uint8_t MY_PACKET_POS4=0x34;
 static uint8_t link_rssi[31];
+
 
 /*****************************************************************************
 * Static Function prototypes
@@ -164,12 +165,18 @@ static void m_state_receive_scan_rsp_exit (void);
 
 app_timer_id_t my_timer;
 uint32_t app_timer_counter=0;
+
 static void my_timer_handler(void * p_context)
 {
-	data_report_generate(app_timer_counter);
+	//data_report_generate(app_timer_counter);
 	app_timer_counter+=1;
-
 }
+
+void get_app_timer_time()
+{
+	
+}
+
 
 static void m_adv_report_generate (uint8_t * const pkt)
 {
@@ -180,6 +187,7 @@ static void m_adv_report_generate (uint8_t * const pkt)
   /* Validate the RSSI value. It is 7 bits, so a value above 0x7F is invalid */
   if (m_rssi > 0x7F)
   {
+		data_report_generate(pkt[0]&0x0F);
     return;
   }
 
@@ -190,23 +198,23 @@ static void m_adv_report_generate (uint8_t * const pkt)
   {
     case PACKET_TYPE_ADV_IND:
       has_data = true;
-      adv_report->event_type = BTLE_REPORT_TYPE_ADV_IND;
+      adv_report->event_type = BTLE_REPORT_TYPE_ADV_IND; //0x0
       break;
 
+		// this is needed
     case PACKET_TYPE_ADV_SCAN_IND:
       has_data = true;
-      adv_report->event_type = BTLE_REPORT_TYPE_ADV_SCAN_IND;
+      adv_report->event_type = BTLE_REPORT_TYPE_ADV_SCAN_IND; //0x2
       break;
 
-    case PACKET_TYPE_ADV_DIRECT_IND:
+    case PACKET_TYPE_ADV_DIRECT_IND: 
       has_data = false;
-      adv_report->event_type = BTLE_REPORT_TYPE_ADV_DIRECT_IND;
+      adv_report->event_type = BTLE_REPORT_TYPE_ADV_DIRECT_IND; //0x1
       break;
 
     case PACKET_TYPE_ADV_NONCONN_IND:
       has_data = true;
       adv_report->event_type = BTLE_REPORT_TYPE_ADV_NONCONN_IND;
-      
       break;
     
     case PACKET_TYPE_SCAN_RSP:
@@ -215,6 +223,7 @@ static void m_adv_report_generate (uint8_t * const pkt)
       break;
     
     default:
+			//data_report_generate(6);
       return;
   }
   
@@ -233,18 +242,28 @@ static void m_adv_report_generate (uint8_t * const pkt)
   adv_report->address_type = (pkt[UL_PDU_DD_SENDER_PADD_OFFSET] & UL_PDU_DD_SENDER_PADD_MASK) >> UL_PDU_DD_SENDER_PADD_SHIFT;
   adv_report->rssi = m_rssi;
   
+	/*
   adv_report->length_data = (adv_report->length_data       ) - BTLE_DEVICE_ADDRESS__SIZE;
   if (adv_report->length_data > 0x1F)
+	{
+		data_report_generate(7);
     return;
+	}
+	*/
   adv_report->length_data  = 0;
-
+/*
   if (has_data)
   {
-    adv_report->length_data = (adv_report->length_data       ) - BTLE_DEVICE_ADDRESS__SIZE;
+    adv_report->length_data = (adv_report->length_data) - BTLE_DEVICE_ADDRESS__SIZE;
     if (adv_report->length_data > 0x1F)
+		{
+			data_report_generate(8);
       return;
+		}
     memcpy(adv_report->report_data, &pkt[9], BTLE_ADVERTISING_DATA__SIZE);
   }
+	*/
+	memcpy(adv_report->report_data, &pkt[9], BTLE_ADVERTISING_DATA__SIZE);
   adv_report->num_reports = 1;
   nrf_report_disp_dispatch (&report);
 }
@@ -399,7 +418,7 @@ void deal_sensor_adv(uint8_t index)
 	uint32_t flag=1<<index;
 	if ((sensor_adv_map&flag)==0)
 	{
-		sensor_adv_map++;
+		sensor_adv_count++;
 		sensor_adv_map=sensor_adv_map|flag;
 	}
 }
@@ -450,6 +469,7 @@ void ll_scan_rx_cb (bool crc_valid)
 					
           m_state_receive_adv_exit ();
           m_adv_report_generate (m_rx_buf);
+					radio_disable();
 
           /* If we're doing active scanning, prepare to send SCAN REQ, otherwise
            * loop back around to receive a new advertisement.
@@ -470,6 +490,7 @@ void ll_scan_rx_cb (bool crc_valid)
         case PACKET_TYPE_ADV_SCAN_IND:
 					index=check_adv_packet(m_rx_buf);
 					m_state_receive_adv_exit ();
+					radio_disable();
           // test: radio disabled?
 					if (index!=-1&&index<SENSOR_MAX)
 					{
@@ -479,7 +500,7 @@ void ll_scan_rx_cb (bool crc_valid)
 					}
 					else
 						m_state_receive_adv_entry ();
-          m_adv_report_generate (m_rx_buf);
+						m_adv_report_generate (m_rx_buf);
 
           break;
 
