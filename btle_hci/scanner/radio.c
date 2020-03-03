@@ -269,7 +269,9 @@ void radio_tx_prepare (void)
 void radio_event_cb (void)
 {
   bool crc_valid;
-  
+  data_report_generate(0x30);
+	data_report_generate(NRF_RADIO->EVENTS_DISABLED);
+	data_report_generate(m_radio_dir);
   if (NRF_RADIO->EVENTS_DISABLED != 0)
   {
     switch (m_radio_dir)
@@ -281,6 +283,7 @@ void radio_event_cb (void)
         crc_valid = NRF_RADIO->CRCSTATUS != 0;
         ll_scan_rx_cb (crc_valid);
         break;
+			
       case RADIO_DIR_TX:
         ll_scan_tx_cb ();
         break;

@@ -139,6 +139,8 @@ static uint32_t sensor_adv_map=0;
 static uint8_t sensor_rsp_count=0;
 static uint8_t MY_PACKET_POS0_POS4[]={0x46,0x1E,0x00,0x30,0x30};
 static uint8_t link_rssi[31];
+static uint8_t sensor_adv_count=0;
+static uint8_t sync_flag=0; // to be modified!!
 
 
 /*****************************************************************************
@@ -333,6 +335,7 @@ static void m_state_send_scan_req_entry (void)
   radio_tx_prepare ();
   
   m_scanner.state = SCANNER_STATE_SEND_REQ;
+	data_report_generate(m_scanner.state);
 }
 
 static void m_state_send_scan_req_exit (void)
@@ -357,6 +360,7 @@ static void m_state_receive_scan_rsp_entry (void)
   }
   
   m_scanner.state = SCANNER_STATE_RECEIVE_SCAN_RSP;
+	data_report_generate(m_scanner.state);
 }
 
 static void m_state_receive_scan_rsp_exit (void)
@@ -412,6 +416,17 @@ void deal_sensor_adv(uint8_t index)
 		sensor_adv_count++;
 		sensor_adv_map=sensor_adv_map|flag;
 	}
+}
+
+bool all_sensor_started()
+{
+	data_report_generate(m_scanner.state);
+	if (sensor_adv_count==1&&sync_flag==0)
+	{
+		sync_flag=1;
+		return true;
+	}
+	return false;
 }
 
 void ll_scan_rx_cb (bool crc_valid)
@@ -506,13 +521,15 @@ void ll_scan_rx_cb (bool crc_valid)
         case PACKET_TYPE_ADV_SCAN_IND:
 					index=check_adv_packet(m_rx_buf);
 					m_state_receive_adv_exit ();
-					radio_disable();
+					//radio_disable();
           // test: radio disabled?
 					if (index!=-1&&index<SENSOR_MAX)
 					{
 						deal_sensor_adv(index);
-						m_adv_report_generate (m_rx_buf);
+						//m_adv_report_generate (m_rx_buf);
 					}
+					else
+						radio_disable();
 					m_state_receive_adv_entry ();
           break;
 
@@ -565,7 +582,7 @@ void ll_scan_tx_cb (void)
     case SCANNER_STATE_SEND_REQ:
       // sync here!! to be modified
       m_state_send_scan_req_exit ();
-      
+      data_report_generate(10);
       m_state_receive_scan_rsp_entry ();
       break;
 
@@ -576,6 +593,8 @@ void ll_scan_tx_cb (void)
 
 void ll_scan_timeout_cb (void)
 {
+	data_report_generate(12);
+	data_report_generate(m_scanner.state);
   switch (m_scanner.state)
   {
     case SCANNER_STATE_RECEIVE_SCAN_RSP:
@@ -583,6 +602,7 @@ void ll_scan_timeout_cb (void)
       radio_disable ();
       //m_state_receive_adv_entry ();
       // might be scan req
+			data_report_generate(11);
       m_state_receive_scan_rsp_entry();
       break;
 
@@ -596,12 +616,12 @@ void send_req_for_sync(void)
   switch (m_scanner.state)
   {
   case SCANNER_STATE_RECEIVE_ADV:
-		data_report_generate(0);
+		data_report_generate(0x40);
     m_state_receive_adv_exit();
     break;
 
   case SCANNER_STATE_RECEIVE_SCAN_RSP:
-		data_report_generate(1);
+		data_report_generate(0x41);
     m_state_receive_scan_rsp_exit();
     break;
 

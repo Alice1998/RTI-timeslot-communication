@@ -99,6 +99,7 @@ nrf_radio_signal_callback_return_param_t *radio_cb (uint8_t sig)
       break;
 
     case NRF_RADIO_CALLBACK_SIGNAL_TYPE_RADIO:
+			data_report_generate(0x20);
       radio_event_cb ();
       break;
 
@@ -110,7 +111,7 @@ nrf_radio_signal_callback_return_param_t *radio_cb (uint8_t sig)
 				//data_report_generate(0);
         ll_scan_stop ();
         // to be modified
-        if(sensor_adv_count==2)
+        if(all_sensor_started())
         {
           send_req_for_sync();
         }
@@ -125,6 +126,7 @@ nrf_radio_signal_callback_return_param_t *radio_cb (uint8_t sig)
       
       /* Check the timeout counter */
 			// in the scan rsp state to be modified
+			/*
       if (NRF_TIMER0->EVENTS_COMPARE[1] != 0)
       {
         NRF_TIMER0->EVENTS_COMPARE[1] = 0;
@@ -133,6 +135,7 @@ nrf_radio_signal_callback_return_param_t *radio_cb (uint8_t sig)
         radio_timeout_cb ();
 				//data_report_generate(1);
       }
+			*/
 			
       break;
 

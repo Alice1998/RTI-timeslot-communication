@@ -40,7 +40,7 @@
 #include <stdbool.h>
 
 // add
-static uint8_t sensor_adv_count=0;
+bool all_sensor_started();
 void send_req_for_sync(void);
 
 int8_t check_adv_packet(uint8_t * const pkt);
