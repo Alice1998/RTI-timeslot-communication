@@ -137,8 +137,7 @@ static uint8_t SENSOR_MAX=32;
 
 static uint32_t sensor_adv_map=0;
 static uint8_t sensor_rsp_count=0;
-static uint8_t MY_PACKET_POS2=0x04;
-static uint8_t MY_PACKET_POS4=0x6f;
+static uint8_t MY_PACKET_POS0_POS4[]={0x46,0x1E,0x00,0x30,0x30};
 static uint8_t link_rssi[31];
 
 
@@ -372,7 +371,7 @@ static void m_state_receive_scan_rsp_exit (void)
 int8_t check_adv_packet(uint8_t * const pkt)
 {
 	int8_t index=-1;
-	if (pkt[2]!=MY_PACKET_POS2 || pkt[4]!=MY_PACKET_POS4)
+	if (memcmp((void*)MY_PACKET_POS0_POS4,(void*)pkt,5)!=0)
 		return -1;
 	uint8_t flag=0;
 	for(uint8_t i=5;i<9;i++)
@@ -382,7 +381,7 @@ int8_t check_adv_packet(uint8_t * const pkt)
 		else
 		{
 			uint8_t value=pkt[i];
-			for(uint8_t i=0;i<8;i++)
+			for(uint8_t j=0;j<8;j++)
 			{
 				if((value&0x1)==1)
 				{
@@ -391,7 +390,7 @@ int8_t check_adv_packet(uint8_t * const pkt)
 					else
 					{
 						flag=1;
-						index+=i;
+						index+=j;
 						index+=1;
 					}
 				}
@@ -409,6 +408,7 @@ void deal_sensor_adv(uint8_t index)
 	uint32_t flag=1<<index;
 	if ((sensor_adv_map&flag)==0)
 	{
+		m_adv_report_generate (m_rx_buf);
 		sensor_adv_count++;
 		sensor_adv_map=sensor_adv_map|flag;
 	}
@@ -504,7 +504,6 @@ void ll_scan_rx_cb (bool crc_valid)
 				
 					// this is the type for sensor adv
         case PACKET_TYPE_ADV_SCAN_IND:
-					m_adv_report_generate (m_rx_buf);
 					index=check_adv_packet(m_rx_buf);
 					m_state_receive_adv_exit ();
 					radio_disable();
@@ -512,6 +511,7 @@ void ll_scan_rx_cb (bool crc_valid)
 					if (index!=-1&&index<SENSOR_MAX)
 					{
 						deal_sensor_adv(index);
+						m_adv_report_generate (m_rx_buf);
 					}
 					m_state_receive_adv_entry ();
           break;
@@ -544,7 +544,8 @@ void ll_scan_rx_cb (bool crc_valid)
       m_packets_valid++;
 
       m_state_receive_scan_rsp_exit ();
-      m_adv_report_generate (m_rx_buf);
+			if (memcmp((void*)m_rx_buf,(void*)MY_PACKET_POS0_POS4,5)!=0)
+				m_adv_report_generate (m_rx_buf);
       //m_state_receive_adv_entry ();
       m_state_receive_scan_rsp_entry();
       break;
@@ -595,10 +596,12 @@ void send_req_for_sync(void)
   switch (m_scanner.state)
   {
   case SCANNER_STATE_RECEIVE_ADV:
+		data_report_generate(0);
     m_state_receive_adv_exit();
     break;
 
   case SCANNER_STATE_RECEIVE_SCAN_RSP:
+		data_report_generate(1);
     m_state_receive_scan_rsp_exit();
     break;
 

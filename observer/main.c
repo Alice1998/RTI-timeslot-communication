@@ -74,7 +74,8 @@
  */
 #ifdef USE_UART_LOGGING
 #define __FILENAME__ (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
-#define __LOG(F, ...) (test_logf("TIMESLOT_TEST_LOG: %s: %d: " #F "\r\n", __FILENAME__, __LINE__, ##__VA_ARGS__))
+//#define __LOG(F, ...) (test_logf("TIMESLOT_TEST_LOG: %s: %d: " #F "\r\n", __FILENAME__, __LINE__, ##__VA_ARGS__))
+#define __LOG(F, ...) (test_logf("" #F "\r\n", ##__VA_ARGS__))
 #else
   #define __LOG(F, ...) (void)__NOP()
 #endif
@@ -229,16 +230,25 @@ int main(void)
 							report.event.params.le_advertising_report_event.rssi,
 							report.valid_packets,
 							report.invalid_packets);
-							for(uint8_t i=0;i<report.event.params.le_advertising_report_event.length_data;i++)
+					if (report.event.params.le_advertising_report_event.event_type==2)
+					{
+							for(uint8_t i=0;i<20;i++)
 							{
 								__LOG("%X",report.event.params.le_advertising_report_event.report_data[i]);
 							}
+							__LOG("%s",&report.event.params.le_advertising_report_event.report_data[21]);
+					}
+					else
+						for(uint8_t i=0;i<report.event.params.le_advertising_report_event.length_data;i++)
+							{
+								__LOG("%X",report.event.params.le_advertising_report_event.report_data[i]);
+							}
+						
 							break;
 							
 							//RSSI Data current debug
 					case BTLE_VS_EVENT_NRF_LL_EVENT_SCAN_REQ_REPORT:
-						__LOG("type %X, valid: %X, invalid %X ",report.event.params.le_advertising_report_event.event_type,
-									report.valid_packets,report.invalid_packets);
+						__LOG("type %X",report.event.params.le_advertising_report_event.event_type);
 						/*for(uint8_t j=0;j<report.event.params.le_advertising_report_event.length_data;j++)
 						{
 							__LOG("%X",report.event.params.le_advertising_report_event.report_data[j]);

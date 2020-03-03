@@ -582,7 +582,7 @@ bool ctrl_adv_param_set(btle_cmd_param_le_write_advertising_parameters_t* adv_pa
 	//static uint8_t ble_addr[] = 000000;
 	// copied from main.c
 	//static uint8_t ble_addr[] = {0x4e, 0x6f, 0x72, 0x64, 0x69, 0x63};
-	static uint8_t ble_addr[] = {0x4e, 0x6f, 0x72, 0x64, 0x69, 0x63};
+	static uint8_t ble_addr[] = {0x30, 0x30, 0x02, 0x00, 0x00, 0x00};
 	//DEFAULT_DEVICE_ADDRESS;
 	memcpy((void*) &adv_data_local[BLE_ADDR_OFFSET],
 				 (void*) &ble_addr[0], BLE_ADDR_LEN);
