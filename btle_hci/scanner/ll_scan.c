@@ -137,8 +137,8 @@ static uint8_t SENSOR_MAX=32;
 
 static uint32_t sensor_adv_map=0;
 static uint8_t sensor_rsp_count=0;
-static uint8_t MY_PACKET_POS2=0x12;
-static uint8_t MY_PACKET_POS4=0x34;
+static uint8_t MY_PACKET_POS2=0x04;
+static uint8_t MY_PACKET_POS4=0x6f;
 static uint8_t link_rssi[31];
 
 
@@ -188,7 +188,6 @@ static void m_adv_report_generate (uint8_t * const pkt)
   /* Validate the RSSI value. It is 7 bits, so a value above 0x7F is invalid */
   if (m_rssi > 0x7F)
   {
-		data_report_generate(pkt[0]&0x0F);
     return;
   }
 
@@ -215,7 +214,7 @@ static void m_adv_report_generate (uint8_t * const pkt)
 
     case PACKET_TYPE_ADV_NONCONN_IND:
       has_data = true;
-      adv_report->event_type = BTLE_REPORT_TYPE_ADV_NONCONN_IND;
+      adv_report->event_type = BTLE_REPORT_TYPE_ADV_NONCONN_IND; //0x3
       break;
     
     case PACKET_TYPE_SCAN_RSP:
@@ -243,28 +242,19 @@ static void m_adv_report_generate (uint8_t * const pkt)
   adv_report->address_type = (pkt[UL_PDU_DD_SENDER_PADD_OFFSET] & UL_PDU_DD_SENDER_PADD_MASK) >> UL_PDU_DD_SENDER_PADD_SHIFT;
   adv_report->rssi = m_rssi;
   
-	/*
-  adv_report->length_data = (adv_report->length_data       ) - BTLE_DEVICE_ADDRESS__SIZE;
-  if (adv_report->length_data > 0x1F)
+	// 3 6 31 or 3 6 24
+	if(has_data)
 	{
-		data_report_generate(7);
-    return;
-	}
-	*/
-  adv_report->length_data  = 0;
-/*
-  if (has_data)
-  {
-    adv_report->length_data = (adv_report->length_data) - BTLE_DEVICE_ADDRESS__SIZE;
-    if (adv_report->length_data > 0x1F)
+		adv_report->length_data = (pkt[1]) - BTLE_DEVICE_ADDRESS__SIZE;
+		if (adv_report->length_data > 0x1F)
 		{
-			data_report_generate(8);
-      return;
+			return;
 		}
-    memcpy(adv_report->report_data, &pkt[9], BTLE_ADVERTISING_DATA__SIZE);
-  }
-	*/
-	memcpy(adv_report->report_data, &pkt[9], BTLE_ADVERTISING_DATA__SIZE);
+		memcpy(adv_report->report_data, &pkt[9], BTLE_ADVERTISING_DATA__SIZE);
+	}
+	else
+		adv_report->length_data=0;
+	
   adv_report->num_reports = 1;
   nrf_report_disp_dispatch (&report);
 }
@@ -432,11 +422,36 @@ void ll_scan_rx_cb (bool crc_valid)
     switch(m_scanner.state)
     {
       case SCANNER_STATE_RECEIVE_ADV:
-        m_packets_invalid++;
+			/*
+			data_report_generate(m_rx_buf[0]);
+				if ((m_rx_buf[0]&0xF)==PACKET_TYPE_ADV_SCAN_IND)
+				{
+					int8_t index=check_adv_packet(m_rx_buf);
+					m_state_receive_adv_exit ();
+					radio_disable();
+					if (index!=-1&&index<SENSOR_MAX)
+					{
+						m_packets_valid++;
+						deal_sensor_adv(index);
+					}
+					else
+						m_packets_invalid++;
+					m_state_receive_adv_entry ();
+				}
+				else
+				{
+					m_packets_invalid++;
       
-        m_state_receive_adv_exit ();
-        radio_disable ();
-        m_state_receive_adv_entry ();
+					m_state_receive_adv_exit ();
+					radio_disable ();
+					m_state_receive_adv_entry ();
+				}
+				*/
+				m_packets_invalid++;
+				m_state_receive_adv_exit ();
+				radio_disable ();
+				m_state_receive_adv_entry ();
+				
         break;
 
       case SCANNER_STATE_RECEIVE_SCAN_RSP:
@@ -469,7 +484,7 @@ void ll_scan_rx_cb (bool crc_valid)
         case PACKET_TYPE_ADV_IND:
 					
           m_state_receive_adv_exit ();
-          m_adv_report_generate (m_rx_buf);
+          //m_adv_report_generate (m_rx_buf);
 					radio_disable();
 
           /* If we're doing active scanning, prepare to send SCAN REQ, otherwise
@@ -489,6 +504,7 @@ void ll_scan_rx_cb (bool crc_valid)
 				
 					// this is the type for sensor adv
         case PACKET_TYPE_ADV_SCAN_IND:
+					m_adv_report_generate (m_rx_buf);
 					index=check_adv_packet(m_rx_buf);
 					m_state_receive_adv_exit ();
 					radio_disable();
@@ -496,13 +512,8 @@ void ll_scan_rx_cb (bool crc_valid)
 					if (index!=-1&&index<SENSOR_MAX)
 					{
 						deal_sensor_adv(index);
-						// to be modified
-						m_state_receive_adv_entry ();
 					}
-					else
-						m_state_receive_adv_entry ();
-						m_adv_report_generate (m_rx_buf);
-
+					m_state_receive_adv_entry ();
           break;
 
         /* These packets do not require response.
@@ -510,14 +521,14 @@ void ll_scan_rx_cb (bool crc_valid)
         case PACKET_TYPE_ADV_DIRECT_IND:
           m_state_receive_adv_exit ();
           radio_disable();
-          m_adv_report_generate (m_rx_buf);
+          //m_adv_report_generate (m_rx_buf);
           m_state_receive_adv_entry ();
           break;
         
         case PACKET_TYPE_ADV_NONCONN_IND:
           m_state_receive_adv_exit ();
           radio_disable();
-          m_adv_report_generate (m_rx_buf);
+          //m_adv_report_generate (m_rx_buf);
           m_state_receive_adv_entry ();
           break;
 

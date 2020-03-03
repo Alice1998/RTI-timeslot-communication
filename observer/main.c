@@ -229,17 +229,17 @@ int main(void)
 							report.event.params.le_advertising_report_event.rssi,
 							report.valid_packets,
 							report.invalid_packets);
-							//for(uint8_t i=0;i<31;i++)
-							//{
-							//	__LOG("%X",report.event.params.le_advertising_report_event.report_data[i]);
-							//}
+							for(uint8_t i=0;i<report.event.params.le_advertising_report_event.length_data;i++)
+							{
+								__LOG("%X",report.event.params.le_advertising_report_event.report_data[i]);
+							}
 							break;
 							
 							//RSSI Data current debug
 					case BTLE_VS_EVENT_NRF_LL_EVENT_SCAN_REQ_REPORT:
 						__LOG("type %X, valid: %X, invalid %X ",report.event.params.le_advertising_report_event.event_type,
 									report.valid_packets,report.invalid_packets);
-						/*for(uint8_t j=0;j<31;j++)
+						/*for(uint8_t j=0;j<report.event.params.le_advertising_report_event.length_data;j++)
 						{
 							__LOG("%X",report.event.params.le_advertising_report_event.report_data[j]);
 						}
