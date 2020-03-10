@@ -126,8 +126,8 @@ static uint8_t m_tx_buf[] =
   0xC3,                               // BLE Header (PDU_TYPE: SCAN_REQ, TXadd: 1 (random address), RXadd: 1 (random address)
   0x0C,                               // Length of payload: 12
   0x00,                               // Padding bits for S1 (REF: the  nRF51 reference manual 16.1.2)
-  0xDA, 0xDB, 0xDC, 0xDD, 0xDE, 0xDF, // InitAddr LSByte first #local addr
-  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // AdvAddr LSByte first
+  0x20, 0x20, 0x20, 0x20, 0x20, 0x00, // InitAddr LSByte first #local addr
+  0x30, 0x30, 0x00, 0x00, 0x00, 0x00, // AdvAddr LSByte first
 };
 
 static uint8_t channel = 37;
@@ -342,7 +342,7 @@ static void m_state_receive_adv_exit (void)
 static void m_state_send_scan_req_entry (void)
 {
 	
-  memcpy(&m_tx_buf[9], &m_rx_buf[3], 6);
+  //memcpy(&m_tx_buf[9], &m_rx_buf[3], 6);
   radio_buffer_configure (&m_tx_buf[0]);
   // 149 us
   radio_tx_prepare ();
