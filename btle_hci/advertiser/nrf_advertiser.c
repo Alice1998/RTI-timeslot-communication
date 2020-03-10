@@ -115,7 +115,12 @@ void btle_hci_adv_sd_evt_handler(uint32_t event)
 		case NRF_EVT_RADIO_SESSION_CLOSED:
 			/* session close accepted, lets just sleep forever.
 			   shouldn't really happen. */
-			ASSERT(false);
+			// received the central req event
+			generate_report(0x30);
+			error_code = sd_radio_session_open(&radio_signal_callback);
+			APP_ERROR_CHECK(error_code);
+			ctrl_timeslot_order();
+			//ASSERT(false);
 		
 		case NRF_EVT_RADIO_BLOCKED:
 			/* The request was blocked by a softdevice event. 

@@ -42,9 +42,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "btle.h"
 #include "nrf51_bitfields.h"
 
+// sensor index modified here
+#define UNIQUE_INDEX 2
+static uint8_t unique_ble_addr[] = {0x30, 0x30, 0x02, 0x00, 0x00, 0x00};
+
 #define HFCLK                   NRF_RADIO_HFCLK_CFG_FORCE_XTAL
-#define TIMESLOT_LENGTH         4300  
-#define TIMESLOT_INTERVAL_100MS 100000
+#define TIMESLOT_LENGTH         UNIQUE_INDEX*150
+#define TIMESLOT_INTERVAL_150MS 150000
 
                               
 #define BLE_TYPE_OFFSET     (0)
@@ -95,6 +99,6 @@ bool ctrl_adv_data_set(btle_cmd_param_le_write_advertising_data_t* adv_data);
 bool ctrl_scan_data_set(btle_cmd_param_le_write_scan_response_data_t* data);
 
 //added
-void general_report(uint8_t flag);
+void generate_report(uint8_t flag);
 
 #endif /* _TS_CONTROLLER_H__ */

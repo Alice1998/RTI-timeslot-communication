@@ -69,8 +69,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * Static Globals
 *****************************************************************************/
 
-// modified here
-#define INDEX 1
 
 /* Buffer for advertisement data */
 static uint8_t adv_data_local[BLE_ADDR_OFFSET + BLE_ADDR_LEN + BLE_PAYLOAD_MAXLEN];
@@ -108,6 +106,7 @@ static btle_adv_interval_t adv_int_max;
 
 /* statemachine state */
 static ts_state_t sm_state;
+static uint8_t START_FLAG=0;
 
 /* advertisement param->type to spec type map */
 static const uint8_t ble_adv_type_raw[] = {0, 1, 6, 2};
@@ -118,6 +117,7 @@ static uint8_t rng_pool[255];
 /* A pointer into our pool. Will wrap around upon overflow */
 static uint8_t pool_index = 0;
 
+static uint8_t GENERAL_SENSOR_ADDR[]={0x30,0x30,0x00,0x00,0x00,0x00};
 
 /*****************************************************************************
 * Globals
@@ -143,8 +143,8 @@ static nrf_radio_request_t g_timeslot_req_normal =
 			.params.normal = {
 						HFCLK, 
 						NRF_RADIO_PRIORITY_NORMAL, 
-						TIMESLOT_INTERVAL_100MS, 		
-						TIMESLOT_LENGTH}
+						TIMESLOT_INTERVAL_150MS*3, 		
+						TIMESLOT_INTERVAL_150MS*3}
 			};
 
 
@@ -243,13 +243,12 @@ static bool is_scan_req_for_me(void)
 	
 	/* check message type and length */
 	
-	if ((0x03 != (ble_rx_buf[0] & 0x0F)) || 
-			(0x0C != ble_rx_buf[1]))
+	if ((0xc3 != ble_rx_buf[0]) || (0x0C != ble_rx_buf[1]))
 	{
 		return false;
 	}
 	/* check included ADV addr, which must match own ADV addr */
-	if (memcmp(	(void*) &adv_data_local[BLE_ADDR_OFFSET], 
+	if (memcmp(	(void*) GENERAL_SENSOR_ADDR, 
 							(void*) &ble_rx_buf[BLE_PAYLOAD_OFFSET], BLE_ADDR_LEN) != 0)
 	{
 		return false;
@@ -257,10 +256,97 @@ static bool is_scan_req_for_me(void)
 	
 	/* all fields ok */
 	++packet_count_valid;
-	
 	return true;
 }
 
+int8_t get_packet_index(uint8_t * const pkt)
+{
+	int8_t index=-1;
+	uint8_t flag=0;
+	for(uint8_t i=5;i<9;i++)
+	{
+		if (pkt[i]==0)
+			index+=8;
+		else
+		{
+			uint8_t value=pkt[i];
+			for(uint8_t j=0;j<8;j++)
+			{
+				if((value&0x1)==1)
+				{
+					if (flag!=0)
+						return -1;
+					else
+					{
+						flag=1;
+						index+=j;
+						index+=1;
+					}
+				}
+				value=value>>1;
+			}
+			break;
+		}
+	}
+	return index;
+}
+
+static bool is_sensor_rsp_and_deal(void)
+{
+	if (0 == NRF_RADIO->CRCSTATUS) 
+	{
+		++packet_count_invalid;
+		return false;
+	}
+	
+	/* check message type and length */
+	
+	if ((0x44 != ble_rx_buf[0])|| (0x25 != ble_rx_buf[1]))
+	{
+		return false;
+	}
+
+	int8_t index=get_packet_index(ble_rx_buf);
+	if (index==-1)
+		return false;
+	
+	/* all fields ok */
+	++packet_count_valid;
+	return true;
+}
+static deal_sensor_rsp_pkt()
+{
+	/* prepare scan rsp report */
+	nrf_report_t sensor_rsp_report;
+	
+	/* packet counters */
+	sensor_rsp_report.valid_packets = packet_count_valid;
+	sensor_rsp_report.invalid_packets = packet_count_invalid;
+	 
+	// to be modified
+	sensor_rsp_report.event.event_code = BTLE_VS_EVENT_NRF_LL_EVENT_SCAN_REQ_REPORT;
+	sensor_rsp_report.event.opcode			= BTLE_CMD_NONE;
+	
+	scan_addr_get(&sensor_rsp_report.event.params.nrf_scan_req_report_event.address_type, 
+									sensor_rsp_report.event.params.nrf_scan_req_report_event.address);
+	
+	
+	periph_radio_rssi_read(&(sensor_rsp_report.event.params.nrf_scan_req_report_event.rssi));
+	periph_radio_channel_get(&(sensor_rsp_report.event.params.nrf_scan_req_report_event.channel));
+	
+	if (index>SENSOR_INDEX)
+	{
+		ble_scan_rsp_data[BLE_PAYLOAD_OFFSET+index-1]=sensor_rsp_report.event.params.nrf_scan_req_report_event.rssi;
+	}
+	else if (index<SENSORI_INDEX)
+	{
+		ble_scan_rsp_data[BLE_PAYLOAD_OFFSET+index]=sensor_rsp_report.event.params.nrf_scan_req_report_event.rssi;
+	}
+
+	/* send scan req event to user space */
+	nrf_report_disp_dispatch(&scan_req_report);
+
+}
 #endif
 
 
@@ -274,11 +360,13 @@ static __INLINE void next_timeslot_schedule(void)
 {
 	if (sm_adv_run)
 	{
-		g_timeslot_req_normal.params.normal.distance_us = ADV_INTERVAL_TRANSLATE(adv_int_min) 
+		//g_timeslot_req_normal.params.normal.distance_us = ADV_INTERVAL_TRANSLATE(adv_int_min) 
 																										+ 1000 * ((rng_pool[pool_index++]) % (ADV_INTERVAL_TRANSLATE(adv_int_max - adv_int_min)));
 		g_signal_callback_return_param.params.request.p_next = &g_timeslot_req_normal;
 		g_signal_callback_return_param.callback_action = NRF_RADIO_SIGNAL_CALLBACK_ACTION_REQUEST_AND_END;
-		NRF_TIMER0->TASKS_STOP = 1;
+		//NRF_TIMER0->TASKS_STOP = 1;
+		periph_timer_abort(0);
+		periph_timer_start(0,g_timeslot_req_normal.params.normal.distance.us,true);
 	}
 	else
 	{
@@ -356,15 +444,15 @@ static void sm_enter_scan_req_rsp(void)
 	periph_radio_tifs_set(148);
 	
 	/* start the timer that aborts the RX if no address is received. */
-	periph_timer_start(0, 200, true);
+	//periph_timer_start(0, 200, true);
 	
 	/* set PPI pipe to stop the timer as soon as an address is received */
-	periph_ppi_set(0, &(NRF_TIMER0->TASKS_STOP), &(NRF_RADIO->EVENTS_ADDRESS));
+	//periph_ppi_set(0, &(NRF_TIMER0->TASKS_STOP), &(NRF_RADIO->EVENTS_ADDRESS));
 }
 
 static void sm_exit_scan_req_rsp(void)
 {
-	periph_timer_abort(0);
+	//periph_timer_abort(0);
 	periph_radio_intenclr(RADIO_INTENCLR_DISABLED_Msk);
 	PERIPHERAL_EVENT_CLR(NRF_RADIO->EVENTS_DISABLED);
 	periph_ppi_clear(0);
@@ -385,17 +473,9 @@ static void sm_enter_wait_for_idle(bool req_rx_accepted)
 	if (req_rx_accepted)
 	{
 #if TS_SEND_SCAN_RSP		
-		/* need to answer request, set scan_rsp packet and 
-		let radio continue to send */
-		periph_radio_packet_ptr_set(&ble_scan_rsp_data[0]);
-		periph_radio_shorts_set(RADIO_SHORTS_READY_START_Msk | RADIO_SHORTS_END_DISABLE_Msk);
-		
-		/* wait exactly 150us to send response. NOTE: the Reference manual is wrong */
-		// modified here***
-		periph_radio_tifs_set(150*INDEX);
-		
-		/* send scan req to user space */
-		scan_req_evt_dispatch();
+		// send_rsp_packet();
+		err_code = sd_radio_session_close ();
+		APP_ERROR_CHECK(error_code);
 #endif		
 	}
 	else
@@ -406,6 +486,29 @@ static void sm_enter_wait_for_idle(bool req_rx_accepted)
 	}
 }
 
+static void deal_sync_packet(void)
+{
+	START_FLAG=1;
+	/* enable disabled interrupt to avoid race conditions */
+	periph_radio_intenset(RADIO_INTENSET_DISABLED_Msk);
+#if TS_SEND_SCAN_RSP		
+	err_code = sd_radio_session_close ();
+	APP_ERROR_CHECK(error_code);
+#endif
+}
+
+static void send_rsp_packet(void)
+{
+#if TS_SEND_SCAN_RSP		
+	/* need to answer request, set scan_rsp packet and 
+	let radio continue to send */
+	periph_radio_packet_ptr_set(&ble_scan_rsp_data[0]);
+	periph_radio_shorts_set(RADIO_SHORTS_READY_START_Msk | RADIO_SHORTS_END_DISABLE_Msk);
+	// to be tested
+	periph_radio_tifs_set(0);
+	scan_req_evt_dispatch();
+#endif
+}
 
 static bool sm_exit_wait_for_idle(void)
 {
@@ -486,7 +589,8 @@ __INLINE void ctrl_signal_handler(uint8_t sig)
 						DEBUG_PIN_POKE(13);
 						sm_exit_adv_send();
 #if TS_SEND_SCAN_RSP
-						sm_enter_scan_req_rsp();
+						// scan for req package
+						sm_enter_scan_req_rsp(); 
 #else 
 						sm_enter_wait_for_idle(false);
 						PERIPHERAL_TASK_TRIGGER(NRF_RADIO->TASKS_DISABLE);
@@ -499,12 +603,29 @@ __INLINE void ctrl_signal_handler(uint8_t sig)
 					{
 						DEBUG_PIN_POKE(12);
 						DEBUG_PIN_POKE(14);
+						// received req for sync
 						sm_exit_scan_req_rsp();
-						sm_enter_wait_for_idle(is_scan_req_for_me());
+						if(is_scan_req_for_me())
+						{
+							deal_sync_packet();
+							sm_enter_scan_req_rsp();
+						}
+						else if(START_FLAG==1&&is_sensor_rsp())
+						{
+							deal_sensor_rsp_pkt();
+							sm_enter_scan_req_rsp();
+						}
+						else
+						{
+							// to be tested
+							sm_enter_adv_send();
+						}
 					}
 					break;
 #endif
+				// to be modified
 				case STATE_WAIT_FOR_IDLE:
+				/*
 					if (RADIO_EVENT(EVENTS_DISABLED))
 					{
 						DEBUG_PIN_POKE(12);
@@ -522,6 +643,8 @@ __INLINE void ctrl_signal_handler(uint8_t sig)
 							sm_enter_adv_send();
 						}
 					}
+				*/
+					generate_report(0x40);
 					break;							
 			
 				default:
@@ -533,16 +656,47 @@ __INLINE void ctrl_signal_handler(uint8_t sig)
 		
 #if TS_SEND_SCAN_RSP		
 		case NRF_RADIO_CALLBACK_SIGNAL_TYPE_TIMER0:
-			generate_report(0);
+			/*
+			generate_report(0x10);
 			DEBUG_PIN_POKE(5);
-
 			sm_exit_scan_req_rsp();
-	
-			/* go to wait for idle, no packet was accepted */
+			go to wait for idle, no packet was accepted 
 			sm_enter_wait_for_idle(false);
 	
 			PERIPHERAL_TASK_TRIGGER(NRF_RADIO->TASKS_DISABLE);
-	
+			*/
+
+			switch(sm_state)
+			{
+				case STATE_ADV_SEND:
+					if(START_FLAG==0)
+					{
+						sm_exit_adv_send();
+						sm_enter_adv_send();
+					}
+					break;
+				
+				case STATE_SCAN_REQ_RSP:
+					sm_exit_scan_req_rsp();
+					if(START_FLAG==1)
+					{
+						// first one does not contain all sensor rssi
+						send_rsp_packet();
+						memcpy(ble_scan_rsp_data,0,sizeof(ble_scan_rsp_data));
+						sm_enter_scan_req_rsp();
+					}
+					else
+					{
+						sm_enter_adv_send();
+					}
+
+					break;
+
+				default:
+					break;
+
+			}
+			next_timeslot_schedule();
 			break;
 #endif		
 
@@ -582,16 +736,15 @@ bool ctrl_adv_param_set(btle_cmd_param_le_write_advertising_parameters_t* adv_pa
 	//static uint8_t ble_addr[] = 000000;
 	// copied from main.c
 	//static uint8_t ble_addr[] = {0x4e, 0x6f, 0x72, 0x64, 0x69, 0x63};
-	static uint8_t ble_addr[] = {0x30, 0x30, 0x02, 0x00, 0x00, 0x00};
 	//DEFAULT_DEVICE_ADDRESS;
 	memcpy((void*) &adv_data_local[BLE_ADDR_OFFSET],
-				 (void*) &ble_addr[0], BLE_ADDR_LEN);
+				 (void*) &unique_ble_addr[0], BLE_ADDR_LEN);
 
 #if TS_SEND_SCAN_RSP
 	/* put address into scan response packet buffer */
 	//memcpy((void*) &ble_scan_rsp_data[BLE_ADDR_OFFSET],(void*) &adv_params->direct_address[0], BLE_ADDR_LEN);
 	memcpy((void*) &ble_scan_rsp_data[BLE_ADDR_OFFSET], 
-					(void*) &ble_addr[0], BLE_ADDR_LEN);
+					(void*) &unique_ble_addr[0], BLE_ADDR_LEN);
 #endif
 	
 	/* address type */
@@ -636,6 +789,7 @@ bool ctrl_adv_param_set(btle_cmd_param_le_write_advertising_parameters_t* adv_pa
 void ctrl_timeslot_order(void)
 {
 	sm_adv_run = true;
+	periph_timer_start(0, SENSOR_INDEX*150, true);
 	timeslot_req_initial();
 }
 

@@ -130,6 +130,8 @@ static uint8_t m_tx_buf[] =
   0x30, 0x30, 0x00, 0x00, 0x00, 0x00, // AdvAddr LSByte first
 };
 
+#define ALL_SENSOR_COUNT 1
+
 static uint8_t channel = 37;
 
 // protocol data
@@ -436,7 +438,7 @@ void deal_sensor_adv(uint8_t index)
 
 bool all_sensor_started()
 {
-	if (sensor_adv_count==2&&sync_flag==0)
+	if (sensor_adv_count==ALL_SENSOR_COUNT&&sync_flag==0)
 	{
 		sync_flag=1;
 		return true;
