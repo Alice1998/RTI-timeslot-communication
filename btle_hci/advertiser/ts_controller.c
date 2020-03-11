@@ -291,30 +291,31 @@ int8_t get_packet_index(uint8_t * const pkt)
 	return index;
 }
 
-static bool is_sensor_rsp_and_deal(void)
+static int8_t is_sensor_rsp(void)
 {
 	if (0 == NRF_RADIO->CRCSTATUS) 
 	{
 		++packet_count_invalid;
-		return false;
+		return -1;
 	}
 	
 	/* check message type and length */
 	
 	if ((0x44 != ble_rx_buf[0])|| (0x25 != ble_rx_buf[1]))
 	{
-		return false;
+		return -1;
 	}
 
 	int8_t index=get_packet_index(ble_rx_buf);
 	if (index==-1)
-		return false;
+		return -1;
 	
 	/* all fields ok */
 	++packet_count_valid;
-	return true;
+	return index;
 }
-static deal_sensor_rsp_pkt()
+
+static void deal_sensor_rsp_pkt(int8_t index)
 {
 	/* prepare scan rsp report */
 	nrf_report_t sensor_rsp_report;
@@ -334,17 +335,17 @@ static deal_sensor_rsp_pkt()
 	periph_radio_rssi_read(&(sensor_rsp_report.event.params.nrf_scan_req_report_event.rssi));
 	periph_radio_channel_get(&(sensor_rsp_report.event.params.nrf_scan_req_report_event.channel));
 	
-	if (index>SENSOR_INDEX)
+	if (index>UNIQUE_INDEX)
 	{
 		ble_scan_rsp_data[BLE_PAYLOAD_OFFSET+index-1]=sensor_rsp_report.event.params.nrf_scan_req_report_event.rssi;
 	}
-	else if (index<SENSORI_INDEX)
+	else if (index<UNIQUE_INDEX)
 	{
 		ble_scan_rsp_data[BLE_PAYLOAD_OFFSET+index]=sensor_rsp_report.event.params.nrf_scan_req_report_event.rssi;
 	}
 
 	/* send scan req event to user space */
-	nrf_report_disp_dispatch(&scan_req_report);
+	nrf_report_disp_dispatch(&sensor_rsp_report);
 
 }
 #endif
@@ -360,13 +361,12 @@ static __INLINE void next_timeslot_schedule(void)
 {
 	if (sm_adv_run)
 	{
-		//g_timeslot_req_normal.params.normal.distance_us = ADV_INTERVAL_TRANSLATE(adv_int_min) 
-																										+ 1000 * ((rng_pool[pool_index++]) % (ADV_INTERVAL_TRANSLATE(adv_int_max - adv_int_min)));
+		//g_timeslot_req_normal.params.normal.distance_us = ADV_INTERVAL_TRANSLATE(adv_int_min) + 1000 * ((rng_pool[pool_index++]) % (ADV_INTERVAL_TRANSLATE(adv_int_max - adv_int_min)));
 		g_signal_callback_return_param.params.request.p_next = &g_timeslot_req_normal;
 		g_signal_callback_return_param.callback_action = NRF_RADIO_SIGNAL_CALLBACK_ACTION_REQUEST_AND_END;
 		//NRF_TIMER0->TASKS_STOP = 1;
 		periph_timer_abort(0);
-		periph_timer_start(0,g_timeslot_req_normal.params.normal.distance.us,true);
+		periph_timer_start(0,g_timeslot_req_normal.params.normal.distance_us,true);
 	}
 	else
 	{
@@ -474,8 +474,8 @@ static void sm_enter_wait_for_idle(bool req_rx_accepted)
 	{
 #if TS_SEND_SCAN_RSP		
 		// send_rsp_packet();
-		err_code = sd_radio_session_close ();
-		APP_ERROR_CHECK(error_code);
+		uint32_t err_code = sd_radio_session_close ();
+		APP_ERROR_CHECK(err_code);
 #endif		
 	}
 	else
@@ -492,8 +492,8 @@ static void deal_sync_packet(void)
 	/* enable disabled interrupt to avoid race conditions */
 	periph_radio_intenset(RADIO_INTENSET_DISABLED_Msk);
 #if TS_SEND_SCAN_RSP		
-	err_code = sd_radio_session_close ();
-	APP_ERROR_CHECK(error_code);
+	uint32_t err_code = sd_radio_session_close ();
+	APP_ERROR_CHECK(err_code);
 #endif
 }
 
@@ -605,14 +605,15 @@ __INLINE void ctrl_signal_handler(uint8_t sig)
 						DEBUG_PIN_POKE(14);
 						// received req for sync
 						sm_exit_scan_req_rsp();
+						int8_t rsp_sensor_index=-1;
 						if(is_scan_req_for_me())
 						{
 							deal_sync_packet();
 							sm_enter_scan_req_rsp();
 						}
-						else if(START_FLAG==1&&is_sensor_rsp())
+						else if(START_FLAG==1&&(rsp_sensor_index=is_sensor_rsp())!=-1)
 						{
-							deal_sensor_rsp_pkt();
+							deal_sensor_rsp_pkt(rsp_sensor_index);
 							sm_enter_scan_req_rsp();
 						}
 						else
@@ -630,7 +631,7 @@ __INLINE void ctrl_signal_handler(uint8_t sig)
 					{
 						DEBUG_PIN_POKE(12);
 						DEBUG_PIN_POKE(15);
-						/* state exit function returns whether the adv event is complete */
+						state exit function returns whether the adv event is complete
 						bool adv_evt_done = sm_exit_wait_for_idle();
 						
 						if (adv_evt_done)
@@ -789,7 +790,7 @@ bool ctrl_adv_param_set(btle_cmd_param_le_write_advertising_parameters_t* adv_pa
 void ctrl_timeslot_order(void)
 {
 	sm_adv_run = true;
-	periph_timer_start(0, SENSOR_INDEX*150, true);
+	periph_timer_start(0, UNIQUE_INDEX*150, true);
 	timeslot_req_initial();
 }
 
