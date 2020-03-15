@@ -366,8 +366,9 @@ static __INLINE void next_timeslot_schedule(void)
 		g_signal_callback_return_param.params.request.p_next = &g_timeslot_req_normal;
 		g_signal_callback_return_param.callback_action = NRF_RADIO_SIGNAL_CALLBACK_ACTION_REQUEST_AND_END;
 		//NRF_TIMER0->TASKS_STOP = 1;
-		periph_timer_abort(0);
-		periph_timer_start(0,g_timeslot_req_normal.params.normal.distance_us,true);
+		if(NRF_TIMER0->EVENTS_COMPARE[0]!=0)
+			periph_timer_abort(0);
+		//periph_timer_start(0,g_timeslot_req_normal.params.normal.distance_us,true);
 	}
 	else
 	{

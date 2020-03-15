@@ -228,7 +228,7 @@ __INLINE void periph_timer_start(uint8_t timer, uint16_t value, bool interrupt)
 {	
 	ASSERT(timer < 4);
 	
-	NRF_TIMER0->TASKS_START = 1;
+	//NRF_TIMER0->TASKS_START = 1;
 	NRF_TIMER0->TASKS_CLEAR = 1;
 	NRF_TIMER0->EVENTS_COMPARE[timer] = 0; 
 	
@@ -245,6 +245,9 @@ __INLINE void periph_timer_start(uint8_t timer, uint16_t value, bool interrupt)
 __INLINE void periph_timer_abort(uint8_t timer)
 {
 	ASSERT(timer < 4);
+
+	NRF_TIMER0->EVENTS_COMPARE[timer] = 0; 
+	NVIC_DisableIRQ(TIMER0_IRQn);
 	
 	NRF_TIMER0->TASKS_STOP = 1;
 	NRF_TIMER0->INTENCLR = (1 << (TIMER_INTENCLR_COMPARE0_Pos + timer));
