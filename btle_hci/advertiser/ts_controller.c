@@ -169,6 +169,7 @@ static __INLINE void channel_iterate(void)
 static __INLINE void timeslot_req_initial(void)
 {	
 	DEBUG_PIN_POKE(7);
+	periph_timer_start(0, UNIQUE_INDEX*150, true);
 	/* send to sd: */
 	uint8_t error_code = sd_radio_request(&g_timeslot_req_earliest);
 	APP_ERROR_CHECK(error_code);
@@ -396,6 +397,7 @@ static __INLINE void adv_evt_setup(void)
 ******************************************/
 static void sm_enter_adv_send(void)
 {
+	generate_report(0x0+START_FLAG*16);
 	sm_state = STATE_ADV_SEND;
 	periph_radio_ch_set(channel);
 	
@@ -418,6 +420,7 @@ static void sm_enter_adv_send(void)
 
 static void sm_exit_adv_send(void)
 {
+	generate_report(0x1+START_FLAG*16);
 	/* wipe events and interrupts triggered by this state */
 	periph_radio_intenclr(RADIO_INTENCLR_DISABLED_Msk);
 	PERIPHERAL_EVENT_CLR(NRF_RADIO->EVENTS_DISABLED);
@@ -430,6 +433,7 @@ static void sm_exit_adv_send(void)
 #if TS_SEND_SCAN_RSP
 static void sm_enter_scan_req_rsp(void)
 {
+	generate_report(0x2+START_FLAG*16);
 	sm_state = STATE_SCAN_REQ_RSP;
 	periph_radio_packet_ptr_set(&ble_rx_buf[0]);
 	
@@ -452,6 +456,7 @@ static void sm_enter_scan_req_rsp(void)
 
 static void sm_exit_scan_req_rsp(void)
 {
+	generate_report(0x3+START_FLAG*16);
 	//periph_timer_abort(0);
 	periph_radio_intenclr(RADIO_INTENCLR_DISABLED_Msk);
 	PERIPHERAL_EVENT_CLR(NRF_RADIO->EVENTS_DISABLED);
@@ -578,7 +583,6 @@ __INLINE void ctrl_signal_handler(uint8_t sig)
 		case NRF_RADIO_CALLBACK_SIGNAL_TYPE_RADIO:
 		{
 			DEBUG_PIN_POKE(0);
-			
 			/* check state, and act accordingly */
 			switch (sm_state)
 			{
@@ -645,7 +649,6 @@ __INLINE void ctrl_signal_handler(uint8_t sig)
 						}
 					}
 				*/
-					generate_report(0x40);
 					break;							
 			
 				default:
@@ -669,6 +672,7 @@ __INLINE void ctrl_signal_handler(uint8_t sig)
 
 			switch(sm_state)
 			{
+				generate_report(0x20);
 				case STATE_ADV_SEND:
 					if(START_FLAG==0)
 					{
@@ -790,7 +794,6 @@ bool ctrl_adv_param_set(btle_cmd_param_le_write_advertising_parameters_t* adv_pa
 void ctrl_timeslot_order(void)
 {
 	sm_adv_run = true;
-	periph_timer_start(0, UNIQUE_INDEX*150, true);
 	timeslot_req_initial();
 }
 
