@@ -68,14 +68,11 @@ static nrf_radio_signal_callback_return_param_t* radio_signal_callback(uint8_t s
 	DEBUG_PIN_SET(1);
 	
 	/* default return value is none */
-	g_signal_callback_return_param.callback_action = NRF_RADIO_SIGNAL_CALLBACK_ACTION_NONE;		
-	
-	
+	g_signal_callback_return_param.callback_action = NRF_RADIO_SIGNAL_CALLBACK_ACTION_NONE;
+	signal_callback_return_param.params.request.p_next = NULL;
 	
 	/* Send signal to the state machine, and let it decide how the event affects the flow */
 	ctrl_signal_handler(sig);
-	
-	
 	
 	/* indicating that the timeslot ended */
 	if (NRF_RADIO_SIGNAL_CALLBACK_ACTION_REQUEST_AND_END 	

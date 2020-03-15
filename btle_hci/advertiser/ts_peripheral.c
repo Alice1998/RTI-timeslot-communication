@@ -239,7 +239,7 @@ __INLINE void periph_timer_start(uint8_t timer, uint16_t value, bool interrupt)
 		NVIC_EnableIRQ(TIMER0_IRQn);
 	}
 	
-	NRF_TIMER0->CC[timer] = value; /* timeout for RX abort */
+	NRF_TIMER0->CC[timer] = value-500; /* timeout for RX abort */
 }
 
 __INLINE void periph_timer_abort(uint8_t timer)

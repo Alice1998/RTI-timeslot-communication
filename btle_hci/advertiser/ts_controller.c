@@ -169,7 +169,6 @@ static __INLINE void channel_iterate(void)
 static __INLINE void timeslot_req_initial(void)
 {	
 	DEBUG_PIN_POKE(7);
-	periph_timer_start(0, UNIQUE_INDEX*150, true);
 	/* send to sd: */
 	uint8_t error_code = sd_radio_request(&g_timeslot_req_earliest);
 	APP_ERROR_CHECK(error_code);
@@ -577,6 +576,7 @@ __INLINE void ctrl_signal_handler(uint8_t sig)
 	{
 		case NRF_RADIO_CALLBACK_SIGNAL_TYPE_START:	
 			DEBUG_PIN_POKE(3);
+			periph_timer_start(0, UNIQUE_INDEX*TIMESLOT_INTERVAL_150MS, true);		
 			adv_evt_setup();
 			sm_enter_adv_send();
 			break;
