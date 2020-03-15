@@ -133,7 +133,7 @@ static nrf_radio_request_t g_timeslot_req_earliest =
 			.params.earliest = {
 						HFCLK, 
 						NRF_RADIO_PRIORITY_NORMAL, 
-						TIMESLOT_LENGTH, 		
+						TIMESLOT_INTERVAL_90MS, 		
 						10000}
 			};
 
@@ -143,8 +143,8 @@ static nrf_radio_request_t g_timeslot_req_normal =
 			.params.normal = {
 						HFCLK, 
 						NRF_RADIO_PRIORITY_NORMAL, 
-						TIMESLOT_INTERVAL_150MS*3, 		
-						TIMESLOT_INTERVAL_150MS*3}
+						TIMESLOT_INTERVAL_90MS, 		
+						TIMESLOT_INTERVAL_90MS}
 			};
 
 
@@ -575,10 +575,10 @@ __INLINE void ctrl_signal_handler(uint8_t sig)
 	switch (sig)
 	{
 		case NRF_RADIO_CALLBACK_SIGNAL_TYPE_START:	
-			DEBUG_PIN_POKE(3);
-			periph_timer_start(0, UNIQUE_INDEX*TIMESLOT_INTERVAL_150MS, true);		
+			DEBUG_PIN_POKE(3);		
 			adv_evt_setup();
 			sm_enter_adv_send();
+			periph_timer_start(0, (uint16_t)TIMESLOT_INTERVAL_90MS, true);
 			break;
 		
 		case NRF_RADIO_CALLBACK_SIGNAL_TYPE_RADIO:
@@ -670,10 +670,8 @@ __INLINE void ctrl_signal_handler(uint8_t sig)
 	
 			PERIPHERAL_TASK_TRIGGER(NRF_RADIO->TASKS_DISABLE);
 			*/
-
 			switch(sm_state)
 			{
-				generate_report(0x20);
 				case STATE_ADV_SEND:
 					if(START_FLAG==0)
 					{

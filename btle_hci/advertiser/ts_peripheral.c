@@ -117,8 +117,8 @@ bool periph_radio_setup(void)
 	NRF_RADIO->EVENTS_DISABLED = 0; 
 	
 	/* Timer: 1us resolution, disable peripheral */
-	NRF_TIMER0->PRESCALER = 4;
-	NRF_TIMER0->TASKS_STOP = 1;
+	//NRF_TIMER0->PRESCALER = 1; // changed here
+	//NRF_TIMER0->TASKS_STOP = 1;
 	
 	/* Do BLE specific radio setup */
 	radio_init();
@@ -228,7 +228,8 @@ __INLINE void periph_timer_start(uint8_t timer, uint16_t value, bool interrupt)
 {	
 	ASSERT(timer < 4);
 	
-	//NRF_TIMER0->TASKS_START = 1;
+	NRF_TIMER0->TASKS_START = 1;
+	NRF_TIMER0->TASKS_STOP=0;
 	NRF_TIMER0->TASKS_CLEAR = 1;
 	NRF_TIMER0->EVENTS_COMPARE[timer] = 0; 
 	
