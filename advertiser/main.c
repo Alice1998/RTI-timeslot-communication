@@ -398,7 +398,7 @@ void SWI0_IRQHandler(void)
       
 			case BTLE_EVENT_LE_ADVERTISING_REPORT:
 				memset(buf,0,256);
-				snprintf(buf,256,"adv general report: %X \n",report.event.params.le_advertising_report_event.report_data[0]);
+				snprintf(buf,256,"general report: %X \r\n",report.event.params.le_advertising_report_event.report_data[0]);
 					uart_putstring((uint8_t*) buf);
 					break;
       /* For now, the only event we care about is the scan req event. */

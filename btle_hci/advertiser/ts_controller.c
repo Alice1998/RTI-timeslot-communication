@@ -682,11 +682,12 @@ __INLINE void ctrl_signal_handler(uint8_t sig)
 				
 				case STATE_SCAN_REQ_RSP:
 					sm_exit_scan_req_rsp();
+					generate_report(0x20+START_FLAG);
 					if(START_FLAG==1)
 					{
 						// first one does not contain all sensor rssi
 						send_rsp_packet();
-						memcpy(ble_scan_rsp_data,0,sizeof(ble_scan_rsp_data));
+						//memcpy(ble_scan_rsp_data,0,sizeof(ble_scan_rsp_data));
 						sm_enter_scan_req_rsp();
 					}
 					else
