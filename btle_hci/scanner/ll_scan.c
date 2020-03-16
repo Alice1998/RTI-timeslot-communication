@@ -438,12 +438,13 @@ void deal_sensor_adv(uint8_t index)
 
 bool all_sensor_started()
 {
-	if (sensor_adv_count==ALL_SENSOR_COUNT&&sync_flag==0)
+	if (sensor_adv_count==ALL_SENSOR_COUNT)
 	{
-		sync_flag=1;
+    // sync_flag=1;
 		return true;
 	}
-	return false;
+  else
+	  return false;
 }
 
 void ll_scan_rx_cb (bool crc_valid)
@@ -643,6 +644,7 @@ void send_req_for_sync(void)
     default:
       break;
     }
+  sync_flag=1;
   m_state_send_scan_req_entry();
 }
 

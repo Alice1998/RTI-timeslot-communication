@@ -108,7 +108,7 @@ nrf_radio_signal_callback_return_param_t *radio_cb (uint8_t sig)
       if (NRF_TIMER0->EVENTS_COMPARE[0] != 0)
       {
         ll_scan_stop ();
-        // to be modified
+        // to be modified: current update every timeslot
         if(all_sensor_started())
         {
           send_req_for_sync();
