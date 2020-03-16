@@ -399,7 +399,9 @@ void SWI0_IRQHandler(void)
 			case BTLE_EVENT_LE_ADVERTISING_REPORT:
 				memset(buf,0,256);
         if (report.event.params.le_advertising_report_event.report_data[0]==0x50)
-          snprintf(buf,256,"general report: %X %X %X %X : %X %X %X %X\r\n",
+				{
+					//if(report.event.params.le_advertising_report_event.report_data[1]==0xc3)
+						snprintf(buf,256,"general report: %X %X %X : %X %X %X %X %X %X : %X %X %X %X %X %X \r\n",
           report.event.params.le_advertising_report_event.report_data[1],
           report.event.params.le_advertising_report_event.report_data[2],
           report.event.params.le_advertising_report_event.report_data[3],
@@ -408,7 +410,14 @@ void SWI0_IRQHandler(void)
           report.event.params.le_advertising_report_event.report_data[6],
           report.event.params.le_advertising_report_event.report_data[7],
           report.event.params.le_advertising_report_event.report_data[8],
-          report.event.params.le_advertising_report_event.report_data[9]);
+					report.event.params.le_advertising_report_event.report_data[9],
+          report.event.params.le_advertising_report_event.report_data[10],
+          report.event.params.le_advertising_report_event.report_data[11],
+          report.event.params.le_advertising_report_event.report_data[12],
+          report.event.params.le_advertising_report_event.report_data[13],
+          report.event.params.le_advertising_report_event.report_data[14],
+          report.event.params.le_advertising_report_event.report_data[15]);
+				}
 				else
 		    	snprintf(buf,256,"general report: %X \r\n",report.event.params.le_advertising_report_event.report_data[0]);
         uart_putstring((uint8_t*) buf);

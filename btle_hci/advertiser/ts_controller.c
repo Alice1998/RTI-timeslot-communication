@@ -224,10 +224,9 @@ void generate_report(uint8_t flag,uint8_t * const pkt)
 	
 	if (pkt!=NULL)
 	{
-		memcpy(my_report.event.params.le_advertising_report_event.report_data,pkt,31);
+		memcpy(&my_report.event.params.le_advertising_report_event.report_data[1],pkt,30);
 	}
-	else
-		my_report.event.params.le_advertising_report_event.report_data[0]=flag;
+	my_report.event.params.le_advertising_report_event.report_data[0]=flag;
 	
 	//btle_ev_param_le_advertising_report_t 
 	nrf_report_disp_dispatch(&my_report);
@@ -240,22 +239,26 @@ void generate_report(uint8_t flag,uint8_t * const pkt)
 static bool is_scan_req_for_me(void)
 {	
 	/* check CRC. Add to number of CRC faults if wrong */
+	/*
 	if (0 == NRF_RADIO->CRCSTATUS) 
 	{
 		++packet_count_invalid;
 		return false;
 	}
+	*/
 	
 	/* check message type and length */
 	
-	if ((0xc3 != ble_rx_buf[0]) || (0x0C != ble_rx_buf[1]))
+	if ((0x3 != (0xF&ble_rx_buf[0])) || (0x0C != ble_rx_buf[1]))
 	{
+		++packet_count_invalid;
 		return false;
 	}
-	/* check included ADV addr, which must match own ADV addr */
+	/* check included ADV addr, which must match own ADV addr BLE_ADDR_LEN) */
 	if (memcmp(	(void*) GENERAL_SENSOR_ADDR, 
-							(void*) &ble_rx_buf[BLE_PAYLOAD_OFFSET], BLE_ADDR_LEN) != 0)
+							(void*) &ble_rx_buf[BLE_PAYLOAD_OFFSET], 2) != 0)
 	{
+		++packet_count_invalid;
 		return false;
 	}
 	
@@ -438,7 +441,7 @@ static void sm_exit_adv_send(void)
 #if TS_SEND_SCAN_RSP
 static void sm_enter_scan_req_rsp(void)
 {
-	generate_report(0x2+START_FLAG*16,,NULL);
+	generate_report(0x2+START_FLAG*16,NULL);
 	sm_state = STATE_SCAN_REQ_RSP;
 	periph_radio_packet_ptr_set(&ble_rx_buf[0]);
 	
@@ -461,7 +464,7 @@ static void sm_enter_scan_req_rsp(void)
 
 static void sm_exit_scan_req_rsp(void)
 {
-	generate_report(0x3+START_FLAG*16,,NULL);
+	generate_report(0x3+START_FLAG*16,NULL);
 	//periph_timer_abort(0);
 	periph_radio_intenclr(RADIO_INTENCLR_DISABLED_Msk);
 	PERIPHERAL_EVENT_CLR(NRF_RADIO->EVENTS_DISABLED);
@@ -498,6 +501,7 @@ static void sm_enter_wait_for_idle(bool req_rx_accepted)
 
 static void deal_sync_packet(void)
 {
+	generate_report(0x30,NULL);
 	START_FLAG=1;
 	/* enable disabled interrupt to avoid race conditions */
 	periph_radio_intenset(RADIO_INTENSET_DISABLED_Msk);
@@ -609,14 +613,15 @@ __INLINE void ctrl_signal_handler(uint8_t sig)
 					break;
 #if TS_SEND_SCAN_RSP					
 				case STATE_SCAN_REQ_RSP:
+					//generate_report(0x50,ble_rx_buf);
 					if (RADIO_EVENT(EVENTS_DISABLED))
 					{
+						//generate_report(0x50,ble_rx_buf);
 						DEBUG_PIN_POKE(12);
 						DEBUG_PIN_POKE(14);
 						// received req for sync
 						sm_exit_scan_req_rsp();
 						int8_t rsp_sensor_index=-1;
-						generate_report(0x50,ble_rx_buf);
 						if(is_scan_req_for_me())
 						{
 							deal_sync_packet();
@@ -689,7 +694,7 @@ __INLINE void ctrl_signal_handler(uint8_t sig)
 				
 				case STATE_SCAN_REQ_RSP:
 					sm_exit_scan_req_rsp();
-					generate_report(0x20+START_FLAG,,NULL);
+					//generate_report(0x20+START_FLAG,NULL);
 					if(START_FLAG==1)
 					{
 						// first one does not contain all sensor rssi

@@ -345,6 +345,8 @@ static void m_state_send_scan_req_entry (void)
 {
 	
   //memcpy(&m_tx_buf[9], &m_rx_buf[3], 6);
+	data_report_generate(m_tx_buf[11],"req_val",sizeof("req_val"));
+	
   radio_buffer_configure (&m_tx_buf[0]);
   // 149 us
   radio_tx_prepare ();
