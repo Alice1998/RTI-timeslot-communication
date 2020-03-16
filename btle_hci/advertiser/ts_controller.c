@@ -213,7 +213,7 @@ static __INLINE void scan_req_evt_dispatch(void)
 	nrf_report_disp_dispatch(&scan_req_report);
 }
 
-void generate_report(uint8_t flag)
+void generate_report(uint8_t flag,uint8_t * const pkt)
 {
 	nrf_report_t my_report;
 	my_report.valid_packets=packet_count_valid;
@@ -222,7 +222,12 @@ void generate_report(uint8_t flag)
 	my_report.event.event_code=BTLE_EVENT_LE_ADVERTISING_REPORT;
 	my_report.event.opcode=BTLE_CMD_NONE;
 	
-	my_report.event.params.le_advertising_report_event.report_data[0]=flag;
+	if (pkt!=NULL)
+	{
+		memcpy(my_report.event.params.le_advertising_report_event.report_data,pkt,31);
+	}
+	else
+		my_report.event.params.le_advertising_report_event.report_data[0]=flag;
 	
 	//btle_ev_param_le_advertising_report_t 
 	nrf_report_disp_dispatch(&my_report);
@@ -397,7 +402,7 @@ static __INLINE void adv_evt_setup(void)
 ******************************************/
 static void sm_enter_adv_send(void)
 {
-	generate_report(0x0+START_FLAG*16);
+	generate_report(0x0+START_FLAG*16,NULL);
 	sm_state = STATE_ADV_SEND;
 	periph_radio_ch_set(channel);
 	
@@ -420,7 +425,7 @@ static void sm_enter_adv_send(void)
 
 static void sm_exit_adv_send(void)
 {
-	generate_report(0x1+START_FLAG*16);
+	generate_report(0x1+START_FLAG*16,NULL);
 	/* wipe events and interrupts triggered by this state */
 	periph_radio_intenclr(RADIO_INTENCLR_DISABLED_Msk);
 	PERIPHERAL_EVENT_CLR(NRF_RADIO->EVENTS_DISABLED);
@@ -433,7 +438,7 @@ static void sm_exit_adv_send(void)
 #if TS_SEND_SCAN_RSP
 static void sm_enter_scan_req_rsp(void)
 {
-	generate_report(0x2+START_FLAG*16);
+	generate_report(0x2+START_FLAG*16,,NULL);
 	sm_state = STATE_SCAN_REQ_RSP;
 	periph_radio_packet_ptr_set(&ble_rx_buf[0]);
 	
@@ -456,7 +461,7 @@ static void sm_enter_scan_req_rsp(void)
 
 static void sm_exit_scan_req_rsp(void)
 {
-	generate_report(0x3+START_FLAG*16);
+	generate_report(0x3+START_FLAG*16,,NULL);
 	//periph_timer_abort(0);
 	periph_radio_intenclr(RADIO_INTENCLR_DISABLED_Msk);
 	PERIPHERAL_EVENT_CLR(NRF_RADIO->EVENTS_DISABLED);
@@ -611,6 +616,7 @@ __INLINE void ctrl_signal_handler(uint8_t sig)
 						// received req for sync
 						sm_exit_scan_req_rsp();
 						int8_t rsp_sensor_index=-1;
+						generate_report(0x50,ble_rx_buf);
 						if(is_scan_req_for_me())
 						{
 							deal_sync_packet();
@@ -624,7 +630,8 @@ __INLINE void ctrl_signal_handler(uint8_t sig)
 						else
 						{
 							// to be tested
-							sm_enter_adv_send();
+							//sm_enter_adv_send();
+							sm_enter_scan_req_rsp();
 						}
 					}
 					break;
@@ -682,7 +689,7 @@ __INLINE void ctrl_signal_handler(uint8_t sig)
 				
 				case STATE_SCAN_REQ_RSP:
 					sm_exit_scan_req_rsp();
-					generate_report(0x20+START_FLAG);
+					generate_report(0x20+START_FLAG,,NULL);
 					if(START_FLAG==1)
 					{
 						// first one does not contain all sensor rssi

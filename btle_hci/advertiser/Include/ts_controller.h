@@ -99,6 +99,6 @@ bool ctrl_adv_data_set(btle_cmd_param_le_write_advertising_data_t* adv_data);
 bool ctrl_scan_data_set(btle_cmd_param_le_write_scan_response_data_t* data);
 
 //added
-void generate_report(uint8_t flag);
+void generate_report(uint8_t flag,uint8_t * const pkt);
 
 #endif /* _TS_CONTROLLER_H__ */

@@ -113,7 +113,7 @@ void btle_hci_adv_sd_evt_handler(uint32_t event)
 			/* session close accepted, lets just sleep forever.
 			   shouldn't really happen. */
 			// received the central req event
-			generate_report(0x30);
+			generate_report(0x30,NULL);
 			uint32_t error_code = sd_radio_session_open(&radio_signal_callback);
 			APP_ERROR_CHECK(error_code);
 			ctrl_timeslot_order();
