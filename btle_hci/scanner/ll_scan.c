@@ -319,10 +319,13 @@ static void m_state_receive_adv_entry (void)
   radio_rssi_enable ();
  
   /* Only go directly to TX if we're doing active scanning */
+  /*
   if (m_scanner.params.scan_type == BTLE_SCAN_TYPE_ACTIVE)
   {
     radio_tx_mode_on_receipt ();
   }
+  */
+  
 
   uint8_t change_flag=1;
 	if (m_scanner.state!=SCANNER_STATE_RECEIVE_ADV)
@@ -360,9 +363,6 @@ static void m_state_send_scan_req_entry (void)
 static void m_state_send_scan_req_exit (void)
 {
   /* Nothing to do */
-
-  NRF_RADIO->INTENCLR=RADIO_INTENCLR_DISABLED_Msk;
-  NRF_RADIO->EVENTS_DISABLED=0;
   data_report_generate(m_scanner.state,"exit_send_req",sizeof("exit_send_req"));
 }
 
@@ -377,10 +377,12 @@ static void m_state_receive_scan_rsp_entry (void)
   //radio_rx_timeout_enable (); add below to be tested
 
   /* Only go directly to TX if we're doing active scanning */
+  /*
   if (m_scanner.params.scan_type == BTLE_SCAN_TYPE_ACTIVE)
   {
     radio_tx_mode_on_receipt ();
   }
+  */
   
   m_scanner.state = SCANNER_STATE_RECEIVE_SCAN_RSP;
   data_report_generate(m_scanner.state,"enter_receive_rsp",sizeof("enter_receive_rsp"));
@@ -652,7 +654,6 @@ void send_req_for_sync(void)
       break;
     }
   sync_flag=1;
-  radio_disable();
   m_state_send_scan_req_entry();
 }
 

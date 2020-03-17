@@ -57,6 +57,8 @@ static enum
   RADIO_DIR_TX
 } m_radio_dir;
 
+uint8_t MY_FLAG=0;
+
 /*****************************************************************************
 * Static Globals
 *****************************************************************************/
@@ -128,8 +130,9 @@ void radio_init (uint8_t channel)
   NRF_RADIO->EVENTS_READY = 0;
   NRF_RADIO->EVENTS_ADDRESS = 0;
   
-  /* Enable interrupt on events */
-  NRF_RADIO->INTENSET = RADIO_INTENSET_ADDRESS_Msk | RADIO_INTENSET_DISABLED_Msk;
+
+  /* Enable interrupt on events  - RADIO_INTENSET_ADDRESS_Msk |  RADIO_INTENSET_DISABLED_Msk;*/
+  NRF_RADIO->INTENSET =  RADIO_INTENSET_DISABLED_Msk;
   
   /* Enable RADIO interrupts */
   NVIC_ClearPendingIRQ(RADIO_IRQn);
@@ -140,11 +143,11 @@ void radio_init (uint8_t channel)
 
 void radio_disable (void)
 {
-  /* Clear events */
-  NRF_RADIO->EVENTS_DISABLED = 0;
-
   /* Set shorts */
   NRF_RADIO->SHORTS = 0;
+
+  /* Clear events */
+  NRF_RADIO->EVENTS_DISABLED = 0;
 
   /* Abort TX */
   NRF_RADIO->TASKS_DISABLE = 1;
@@ -184,6 +187,7 @@ uint8_t radio_rssi_get (void)
 }
 void radio_rx_prepare (bool start_immediately)
 {
+	MY_FLAG=0;
   /* Clear events */
   NRF_RADIO->EVENTS_DISABLED = 0;
 
@@ -263,10 +267,28 @@ void radio_tx_prepare (void)
 
 	
   //NRF_RADIO->TIFS = 149; 
+	
+  /* Set shorts */
+  NRF_RADIO->SHORTS = 0;
+	MY_FLAG=1;
 
+  /* Clear events */
+  NRF_RADIO->EVENTS_DISABLED = 0;
+	MY_FLAG=2;
+
+  /* Abort TX */
+  NRF_RADIO->TASKS_DISABLE = 1;
+	MY_FLAG=3;
+	
   NRF_RADIO->TASKS_TXEN=1;
+	MY_FLAG=4;
+	
   NRF_RADIO->SHORTS = RADIO_SHORTS_READY_START_Msk | RADIO_SHORTS_END_DISABLE_Msk | RADIO_SHORTS_DISABLED_RXEN_Msk;
   //NRF_RADIO->INTENSET=RADIO_INTENSET_DISABLED_Msk;
+	MY_FLAG=4;
+  NRF_RADIO->TASKS_TXEN=1;
+	MY_FLAG=5;
+	m_radio_dir = RADIO_DIR_TX;
 /*
   
 	NRF_RADIO->SHORTS	&=~RADIO_SHORTS_DISABLED_RXEN_Msk;
@@ -289,7 +311,6 @@ void radio_tx_prepare (void)
 	NRF_RADIO->TASKS_TXEN=1;
 	*/
 		
-  m_radio_dir = RADIO_DIR_TX;
 }
 
 void radio_event_cb (void)
@@ -297,6 +318,7 @@ void radio_event_cb (void)
   bool crc_valid;
 	if(m_radio_dir==RADIO_DIR_TX)
 		data_report_generate(NRF_RADIO->EVENTS_DISABLED,"[radio]events",sizeof("[radio]events"));
+	data_report_generate(m_radio_dir,"[radio]radio_dir",sizeof("[radio]radio_dir"));
   if (NRF_RADIO->EVENTS_DISABLED != 0)
   {
     switch (m_radio_dir)
@@ -316,13 +338,16 @@ void radio_event_cb (void)
         break;
     }
     NRF_RADIO->EVENTS_DISABLED = 0;
+    //NRF_RADIO->INTENCLR=RADIO_INTENCLR_DISABLED_Msk;
   }
   
   if (NRF_RADIO->EVENTS_ADDRESS != 0)
   {
     if (m_radio_dir == RADIO_DIR_RX)
     {
-      radio_rx_timeout_disable ();      
+      //radio_rx_timeout_disable (); 
+      data_report_generate(MY_FLAG,"[radio]ADDRESS",sizeof("[radio]ADDRESS"));
+         
     }
     NRF_RADIO->EVENTS_ADDRESS = 0;
   }
