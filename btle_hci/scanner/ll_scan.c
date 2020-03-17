@@ -362,7 +362,7 @@ static void m_state_send_scan_req_exit (void)
   /* Nothing to do */
 
   NRF_RADIO->INTENCLR=RADIO_INTENCLR_DISABLED_Msk;
-  PERIPHERAL_EVENT_CLR(NRF_RADIO->EVENTS_DISABLED);
+  NRF_RADIO->EVENTS_DISABLED=0;
   data_report_generate(m_scanner.state,"exit_send_req",sizeof("exit_send_req"));
 }
 
@@ -579,6 +579,7 @@ void ll_scan_rx_cb (bool crc_valid)
 
 void ll_scan_tx_cb (void)
 {
+	//data_report_generate(m_scanner.state,"sync_flag=1_just_send_req_into_scan",sizeof("sync_flag=1_just_send_req_into_scan"));
   if(sync_flag==1)
   {
     // just send the req
@@ -651,7 +652,7 @@ void send_req_for_sync(void)
       break;
     }
   sync_flag=1;
-  radio_disabled();
+  radio_disable();
   m_state_send_scan_req_entry();
 }
 
@@ -754,7 +755,7 @@ btle_status_codes_t ll_scan_start (void)
     channel = 37;
   
   radio_init (channel++);
-  radio_rx_timeout_init ();
+  //radio_rx_timeout_init ();
   
   m_state_receive_adv_entry ();
 
