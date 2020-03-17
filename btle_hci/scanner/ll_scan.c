@@ -360,6 +360,9 @@ static void m_state_send_scan_req_entry (void)
 static void m_state_send_scan_req_exit (void)
 {
   /* Nothing to do */
+
+  NRF_RADIO->INTENCLR=RADIO_INTENCLR_DISABLED_Msk;
+  PERIPHERAL_EVENT_CLR(NRF_RADIO->EVENTS_DISABLED);
   data_report_generate(m_scanner.state,"exit_send_req",sizeof("exit_send_req"));
 }
 
@@ -648,6 +651,7 @@ void send_req_for_sync(void)
       break;
     }
   sync_flag=1;
+  radio_disabled();
   m_state_send_scan_req_entry();
 }
 
