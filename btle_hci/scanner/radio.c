@@ -269,6 +269,8 @@ void radio_tx_prepare (void)
 void radio_event_cb (void)
 {
   bool crc_valid;
+	data_report_generate(m_radio_dir,"[radio]TX2",sizeof("[radio]TX2"));
+	data_report_generate(NRF_RADIO->EVENTS_DISABLED,"[radio]events",sizeof("[radio]events"));
   if (NRF_RADIO->EVENTS_DISABLED != 0)
   {
     switch (m_radio_dir)
