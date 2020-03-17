@@ -253,24 +253,44 @@ void radio_tx_mode_on_receipt (void)
 void radio_tx_prepare (void)
 {
   /* Clear events */
-  NRF_RADIO->EVENTS_DISABLED = 0;
+  //NRF_RADIO->EVENTS_DISABLED = 0;
   
   /* Enable RX */
-  NRF_RADIO->TASKS_TXEN = 1;
+  //NRF_RADIO->TASKS_TXEN = 1;
   
   /* Set shorts */
-  NRF_RADIO->SHORTS = RADIO_SHORTS_READY_START_Msk | RADIO_SHORTS_END_DISABLE_Msk | RADIO_SHORTS_DISABLED_RXEN_Msk;
-  
-  NRF_RADIO->TIFS = 149;  
-  
+ // NRF_RADIO->SHORTS = RADIO_SHORTS_READY_START_Msk | RADIO_SHORTS_END_DISABLE_Msk | RADIO_SHORTS_DISABLED_RXEN_Msk;
+
+	
+  //NRF_RADIO->TIFS = 149; 
+	NRF_RADIO->SHORTS	&=~RADIO_SHORTS_DISABLED_RXEN_Msk;
+	
+	data_report_generate(0x0,"[radio]tx_prepare",sizeof("[radio]tx_prepare"));
+	NRF_RADIO->EVENTS_DISABLED=0;
+	NRF_RADIO->TASKS_DISABLE=1;
+	while(NRF_RADIO->EVENTS_DISABLED==0);
+	
+	data_report_generate(0x1,"[radio]EVENTS_DISABLED",sizeof("[radio]EVENTS_DISABLED"));
+	NRF_RADIO->EVENTS_END=0;
+	NRF_RADIO->EVENTS_READY=0;
+	NRF_RADIO->INTENCLR=0xFFFFFFFF;
+	NRF_RADIO->INTENSET=RADIO_INTENSET_END_Msk;
+	
+	NRF_RADIO->SHORTS = RADIO_SHORTS_READY_START_Msk | RADIO_SHORTS_END_DISABLE_Msk | RADIO_SHORTS_DISABLED_RXEN_Msk;
+
+	
+  NRF_RADIO->EVENTS_READY=0;
+	NRF_RADIO->TASKS_TXEN=1;
+	
+		
   m_radio_dir = RADIO_DIR_TX;
 }
 
 void radio_event_cb (void)
 {
   bool crc_valid;
-	data_report_generate(m_radio_dir,"[radio]TX2",sizeof("[radio]TX2"));
-	data_report_generate(NRF_RADIO->EVENTS_DISABLED,"[radio]events",sizeof("[radio]events"));
+	if(m_radio_dir==RADIO_DIR_TX)
+		data_report_generate(NRF_RADIO->EVENTS_DISABLED,"[radio]events",sizeof("[radio]events"));
   if (NRF_RADIO->EVENTS_DISABLED != 0)
   {
     switch (m_radio_dir)

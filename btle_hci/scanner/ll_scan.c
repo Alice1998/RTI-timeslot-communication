@@ -323,6 +323,7 @@ static void m_state_receive_adv_entry (void)
   {
     radio_tx_mode_on_receipt ();
   }
+
   uint8_t change_flag=1;
 	if (m_scanner.state!=SCANNER_STATE_RECEIVE_ADV)
 		change_flag=0;
