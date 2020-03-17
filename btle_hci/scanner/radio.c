@@ -128,8 +128,8 @@ void radio_init (uint8_t channel)
   NRF_RADIO->EVENTS_READY = 0;
   NRF_RADIO->EVENTS_ADDRESS = 0;
   
-  /* Enable interrupt on events */
-  //NRF_RADIO->INTENSET = RADIO_INTENSET_ADDRESS_Msk | RADIO_INTENSET_DISABLED_Msk;
+  /* Enable interrupt on events  - RADIO_INTENSET_ADDRESS_Msk | */
+  NRF_RADIO->INTENSET =  RADIO_INTENSET_DISABLED_Msk;
   
   /* Enable RADIO interrupts */
   NVIC_ClearPendingIRQ(RADIO_IRQn);
@@ -140,11 +140,11 @@ void radio_init (uint8_t channel)
 
 void radio_disable (void)
 {
-  /* Clear events */
-  NRF_RADIO->EVENTS_DISABLED = 0;
-
   /* Set shorts */
   NRF_RADIO->SHORTS = 0;
+
+  /* Clear events */
+  NRF_RADIO->EVENTS_DISABLED = 0;
 
   /* Abort TX */
   NRF_RADIO->TASKS_DISABLE = 1;
@@ -263,10 +263,12 @@ void radio_tx_prepare (void)
 
 	
   //NRF_RADIO->TIFS = 149; 
+  radio_disable();
 
-  PERIPHERAL_TASK_TRIGGER(NRF_RADIO->TASKS_TXEN);
   NRF_RADIO->SHORTS = RADIO_SHORTS_READY_START_Msk | RADIO_SHORTS_END_DISABLE_Msk | RADIO_SHORTS_DISABLED_RXEN_Msk;
-  NRF_RADIO->INTENSET=RADIO_INTENSET_DISABLED_Msk;
+  //NRF_RADIO->INTENSET=RADIO_INTENSET_DISABLED_Msk;
+
+  NRF_RADIO->TASKS_TXEN=1;
 /*
   
 	NRF_RADIO->SHORTS	&=~RADIO_SHORTS_DISABLED_RXEN_Msk;
@@ -316,13 +318,16 @@ void radio_event_cb (void)
         break;
     }
     NRF_RADIO->EVENTS_DISABLED = 0;
+    //NRF_RADIO->INTENCLR=RADIO_INTENCLR_DISABLED_Msk;
   }
   
   if (NRF_RADIO->EVENTS_ADDRESS != 0)
   {
     if (m_radio_dir == RADIO_DIR_RX)
     {
-      radio_rx_timeout_disable ();      
+      //radio_rx_timeout_disable (); 
+      data_report_generate(m_scanner.state,"[radio]ADDRESS",sizeof("[radio]ADDRESS"));
+         
     }
     NRF_RADIO->EVENTS_ADDRESS = 0;
   }
