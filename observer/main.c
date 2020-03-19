@@ -207,6 +207,10 @@ int main(void)
   btle_err_code = btle_scan_enable_set (scan_enable);
   ASSERT (btle_err_code == BTLE_STATUS_CODE_SUCCESS);
   __LOG ("Scanner enabled");
+	
+	char start_msg[31];
+	sprintf(&start_msg[0], "R:%X A:%X E:%X D:%X", NRF_RADIO->EVENTS_READY,NRF_RADIO->EVENTS_ADDRESS,NRF_RADIO->EVENTS_END,NRF_RADIO->EVENTS_DISABLED);
+  __LOG(start_msg);
 
   nrf_adv_conn_init ();
 
@@ -378,7 +382,7 @@ static void initialize_uart(void)
     .cts_pin_no   = CTS_PIN_NUMBER,
     .flow_control = APP_UART_FLOW_CONTROL_DISABLED,
     .use_parity   = false,
-    .baud_rate    = UART_BAUDRATE_BAUDRATE_Baud38400
+    .baud_rate    = UART_BAUDRATE_BAUDRATE_Baud115200
   };
   APP_UART_FIFO_INIT(&uart_params,
                      UART_RX_BUF_SIZE,

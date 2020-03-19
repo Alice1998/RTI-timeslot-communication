@@ -44,6 +44,8 @@
 #include <stdint.h>
 #include <string.h>
 
+#include <stdio.h>
+
 /*****************************************************************************
 * Local definitions
 *****************************************************************************/
@@ -150,6 +152,8 @@ void radio_disable (void)
 
   /* Abort TX */
   NRF_RADIO->TASKS_DISABLE = 1;
+	
+	data_report_generate(NRF_RADIO->EVENTS_DISABLED,"in_RADIO_DISABLED",sizeof("in_RADIO_DISABLED"));
   
   m_radio_dir = RADIO_DIR_NONE;
 }
@@ -266,67 +270,44 @@ void radio_tx_prepare (void)
 	
   //NRF_RADIO->TIFS = 149; 
   char start_msg[31];
-  sprintf(start_msg, "1TD:%X TX:%X RX:%X",NRF_RADIO->TASKS_DISABLE,NRF_RADIO->TASKS_TXEN,NRF_RADIO->TASKS_RXEN);
-  data_report_generate(NRF_RADIO->SHORTS,start_msg,31);
-  sprintf(start_msg, "ER:%X EA:%X EE:%X ED:%X", NRF_RADIO->EVENTS_READY,NRF_RADIO->ADDRESS,NRF_RADIO->EVENTS_END,NRF_RADIO->EVENTS_DISABLED);
-  data_report_generate(NRF_RADIO->SHORTS,start_msg,31);
+
+  //sprintf(start_msg, "4TD:%X TX:%X RX:%X",NRF_RADIO->TASKS_DISABLE,NRF_RADIO->TASKS_TXEN,NRF_RADIO->TASKS_RXEN);
+  //data_report_generate(NRF_RADIO->SHORTS,start_msg,31);
+  //sprintf(start_msg, "ER:%X EA:%X EE:%X ED:%X", NRF_RADIO->EVENTS_READY,NRF_RADIO->EVENTS_ADDRESS,NRF_RADIO->EVENTS_END,NRF_RADIO->EVENTS_DISABLED);
+  //data_report_generate(NRF_RADIO->SHORTS,start_msg,31);
 	
-  /* Set shorts */
-  NRF_RADIO->SHORTS = 0;
-
-  sprintf(start_msg, "2TD:%X TX:%X RX:%X",NRF_RADIO->TASKS_DISABLE,NRF_RADIO->TASKS_TXEN,NRF_RADIO->TASKS_RXEN);
-  data_report_generate(NRF_RADIO->SHORTS,start_msg,31);
-  sprintf(start_msg, "ER:%X EA:%X EE:%X ED:%X", NRF_RADIO->EVENTS_READY,NRF_RADIO->ADDRESS,NRF_RADIO->EVENTS_END,NRF_RADIO->EVENTS_DISABLED);
-  data_report_generate(NRF_RADIO->SHORTS,start_msg,31);
-
-  /* Clear events */
-  NRF_RADIO->EVENTS_DISABLED = 0;
-
-  sprintf(start_msg, "3TD:%X TX:%X RX:%X",NRF_RADIO->TASKS_DISABLE,NRF_RADIO->TASKS_TXEN,NRF_RADIO->TASKS_RXEN);
-  data_report_generate(NRF_RADIO->SHORTS,start_msg,31);
-  sprintf(start_msg, "ER:%X EA:%X EE:%X ED:%X", NRF_RADIO->EVENTS_READY,NRF_RADIO->ADDRESS,NRF_RADIO->EVENTS_END,NRF_RADIO->EVENTS_DISABLED);
-  data_report_generate(NRF_RADIO->SHORTS,start_msg,31);
-
-  /* Abort TX */
-  NRF_RADIO->TASKS_DISABLE = 1;
-
-  sprintf(start_msg, "4TD:%X TX:%X RX:%X",NRF_RADIO->TASKS_DISABLE,NRF_RADIO->TASKS_TXEN,NRF_RADIO->TASKS_RXEN);
-  data_report_generate(NRF_RADIO->SHORTS,start_msg,31);
-  sprintf(start_msg, "ER:%X EA:%X EE:%X ED:%X", NRF_RADIO->EVENTS_READY,NRF_RADIO->ADDRESS,NRF_RADIO->EVENTS_END,NRF_RADIO->EVENTS_DISABLED);
-  data_report_generate(NRF_RADIO->SHORTS,start_msg,31);
-	
-  NRF_RADIO->TASKS_TXEN=1;
-
-  sprintf(start_msg, "5TD:%X TX:%X RX:%X",NRF_RADIO->TASKS_DISABLE,NRF_RADIO->TASKS_TXEN,NRF_RADIO->TASKS_RXEN);
-  data_report_generate(NRF_RADIO->SHORTS,start_msg,31);
-  sprintf(start_msg, "ER:%X EA:%X EE:%X ED:%X", NRF_RADIO->EVENTS_READY,NRF_RADIO->ADDRESS,NRF_RADIO->EVENTS_END,NRF_RADIO->EVENTS_DISABLED);
-  data_report_generate(NRF_RADIO->SHORTS,start_msg,31);
 	
   NRF_RADIO->SHORTS = RADIO_SHORTS_READY_START_Msk | RADIO_SHORTS_END_DISABLE_Msk | RADIO_SHORTS_DISABLED_RXEN_Msk;
   //NRF_RADIO->INTENSET=RADIO_INTENSET_DISABLED_Msk;
 
-  sprintf(start_msg, "6TD:%X TX:%X RX:%X",NRF_RADIO->TASKS_DISABLE,NRF_RADIO->TASKS_TXEN,NRF_RADIO->TASKS_RXEN);
-  data_report_generate(NRF_RADIO->SHORTS,start_msg,31);
-  sprintf(start_msg, "ER:%X EA:%X EE:%X ED:%X", NRF_RADIO->EVENTS_READY,NRF_RADIO->ADDRESS,NRF_RADIO->EVENTS_END,NRF_RADIO->EVENTS_DISABLED);
-  data_report_generate(NRF_RADIO->SHORTS,start_msg,31);
-
+  //sprintf(start_msg, "6TD:%X TX:%X RX:%X",NRF_RADIO->TASKS_DISABLE,NRF_RADIO->TASKS_TXEN,NRF_RADIO->TASKS_RXEN);
+  //data_report_generate(NRF_RADIO->SHORTS,start_msg,31);
+  //sprintf(start_msg, "R:%X A:%X E:%X D:%X", NRF_RADIO->EVENTS_READY,NRF_RADIO->EVENTS_ADDRESS,NRF_RADIO->EVENTS_END,NRF_RADIO->EVENTS_DISABLED);
+  //data_report_generate(NRF_RADIO->SHORTS,start_msg,31);
+	
+	// 0 data_report_generate(NRF_RADIO->EVENTS_DISABLED,"radio_disabled",sizeof("radio_disabled"));
   NRF_RADIO->TASKS_TXEN=1;
+	//data_report_generate(NRF_RADIO->EVENTS_READY,"radio_ready",sizeof("radio_ready"));
+	//data_report_generate(NRF_RADIO->TASKS_START,"tasks_start",sizeof("tasks_start"));
 
-  sprintf(start_msg, "7TD:%X TX:%X RX:%X",NRF_RADIO->TASKS_DISABLE,NRF_RADIO->TASKS_TXEN,NRF_RADIO->TASKS_RXEN);
-  data_report_generate(NRF_RADIO->SHORTS,start_msg,31);
-  sprintf(start_msg, "ER:%X EA:%X EE:%X ED:%X", NRF_RADIO->EVENTS_READY,NRF_RADIO->ADDRESS,NRF_RADIO->EVENTS_END,NRF_RADIO->EVENTS_DISABLED);
-  data_report_generate(NRF_RADIO->SHORTS,start_msg,31);
+  //sprintf(start_msg, "7TD:%X TX:%X RX:%X",NRF_RADIO->TASKS_DISABLE,NRF_RADIO->TASKS_TXEN,NRF_RADIO->TASKS_RXEN);
+  //data_report_generate(NRF_RADIO->SHORTS,start_msg,31);
+  sprintf(&start_msg[0], "R:%X A:%X E:%X D:%X", NRF_RADIO->EVENTS_READY,NRF_RADIO->EVENTS_ADDRESS,NRF_RADIO->EVENTS_END,NRF_RADIO->EVENTS_DISABLED);
+  data_report_generate(NRF_RADIO->SHORTS,&start_msg[0],31);
 
 	m_radio_dir = RADIO_DIR_TX;
+		
 		
 }
 
 void radio_event_cb (void)
 {
   bool crc_valid;
-  char start_msg[31];
-  sprintf(start_msg, "ER:%X EA:%X EE:%X ED:%X", NRF_RADIO->EVENTS_READY,NRF_RADIO->ADDRESS,NRF_RADIO->EVENTS_END,NRF_RADIO->EVENTS_DISABLED);
-  data_report_generate(m_radio_dir,start_msg,31);
+  //char start_msg[31];
+  //sprintf(start_msg, "ER:%X EA:%X EE:%X ED:%X", NRF_RADIO->EVENTS_READY,NRF_RADIO->EVENTS_ADDRESS,NRF_RADIO->EVENTS_END,NRF_RADIO->EVENTS_DISABLED);
+  //data_report_generate(m_radio_dir,start_msg,31);
+	if (m_radio_dir==RADIO_DIR_TX)
+		data_report_generate(NRF_RADIO->EVENTS_DISABLED,"SENT",sizeof("SENT"));
 
 	if (NRF_RADIO->EVENTS_DISABLED != 0)
   {
@@ -352,6 +333,7 @@ void radio_event_cb (void)
   
   if (NRF_RADIO->EVENTS_ADDRESS != 0)
   {
+		/*
     if (m_radio_dir == RADIO_DIR_RX)
     {
       //radio_rx_timeout_disable (); 
@@ -359,6 +341,7 @@ void radio_event_cb (void)
       ;
          
     }
+		*/
     NRF_RADIO->EVENTS_ADDRESS = 0;
   }
 }
