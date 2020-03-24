@@ -757,8 +757,11 @@ btle_status_codes_t ll_scan_start (void)
   
   radio_init (channel++);
   //radio_rx_timeout_init ();
-  
-  m_state_receive_adv_entry ();
+	
+	if (all_sensor_started())
+		send_req_for_sync();
+	else
+		m_state_receive_adv_entry ();
 
   return BTLE_STATUS_CODE_SUCCESS;
 }
