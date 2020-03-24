@@ -70,6 +70,7 @@ typedef enum
   STATE_ADV_SEND,
   STATE_SCAN_REQ_RSP,
   STATE_WAIT_FOR_IDLE,
+	STATE_SEND_RSP,
 } ts_state_t; 
 
 

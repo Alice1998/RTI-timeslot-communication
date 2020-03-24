@@ -253,13 +253,13 @@ static uint8_t is_central_req_sensor_rsq(void)
 		return 0;
 	}
 	
-	if ((0xc3 == ble_rx_buf[0])) && (0x0C == ble_rx_buf[1]))
+	if ((0xc3 == ble_rx_buf[0]) && (0x0C == ble_rx_buf[1]))
 	{
 		++packet_count_valid;
 		return 1;
 	}
 	// to be tested
-	if ((0x44 == ble_rx_buf[0])) && (0x25 == ble_rx_buf[1]))
+	if ((0x44 == ble_rx_buf[0]) && (0x25 == ble_rx_buf[1]))
 	{
 		++packet_count_valid;
 		return 2;
@@ -268,22 +268,7 @@ static uint8_t is_central_req_sensor_rsq(void)
 		return 0;
 }
 
-bool is_sensor_rsp(void)
-{
-	if (0 == NRF_RADIO->CRCSTATUS) 
-	{
-		++packet_count_invalid;
-		return false;
-	}
-	
-	/* check message type and length */
-	
-	if ((0xc3 != ble_rx_buf[0])) || (0x0C != ble_rx_buf[1]))
-	{
-		++packet_count_invalid;
-		return false;
-	}
-}
+
 
 int8_t get_packet_index(uint8_t * const pkt)
 {
@@ -317,29 +302,7 @@ int8_t get_packet_index(uint8_t * const pkt)
 	return index;
 }
 
-static int8_t is_sensor_rsp(void)
-{
-	if (0 == NRF_RADIO->CRCSTATUS) 
-	{
-		++packet_count_invalid;
-		return -1;
-	}
-	
-	/* check message type and length */
-	
-	if ((0x44 != ble_rx_buf[0])|| (0x25 != ble_rx_buf[1]))
-	{
-		return -1;
-	}
 
-	int8_t index=get_packet_index(ble_rx_buf);
-	if (index==-1)
-		return -1;
-	
-	/* all fields ok */
-	++packet_count_valid;
-	return index;
-}
 
 static void deal_sensor_rsp_pkt(int8_t index)
 {
@@ -523,13 +486,13 @@ static void deal_sync_packet(void)
 #if TS_SEND_SCAN_RSP		
 	//uint32_t err_code = sd_radio_session_close ();
 
-	APP_ERROR_CHECK(err_code);
+	//APP_ERROR_CHECK(err_code);
 #endif
 }
 
 static void send_rsp_packet(void)
 {
-
+	sm_state=STATE_SEND_RSP;
 	/* enable disabled interrupt to avoid race conditions */
 	periph_radio_intenset(RADIO_INTENSET_DISABLED_Msk);
 
@@ -539,8 +502,8 @@ static void send_rsp_packet(void)
 	periph_radio_packet_ptr_set(&ble_scan_rsp_data[0]);
 	periph_radio_shorts_set(RADIO_SHORTS_READY_START_Msk | RADIO_SHORTS_END_DISABLE_Msk);
 	// to be tested
-	periph_radio_tifs_set(0);
-	scan_req_evt_dispatch();
+	periph_radio_tifs_set(100);
+	//scan_req_evt_dispatch();
 #endif
 }
 
@@ -614,7 +577,7 @@ __INLINE void ctrl_signal_handler(uint8_t sig)
 	{
 		case NRF_RADIO_CALLBACK_SIGNAL_TYPE_START:	
 			DEBUG_PIN_POKE(3);
-			periph_timer_start(0,g_timeslot_req_normal.params.normal.distance_us-500,true)		
+			periph_timer_start(0,g_timeslot_req_normal.params.normal.distance_us-500,true);		
 			adv_evt_setup();
 			if(START_FLAG==0)
 				sm_enter_adv_send();
@@ -648,7 +611,6 @@ __INLINE void ctrl_signal_handler(uint8_t sig)
 #if TS_SEND_SCAN_RSP	
 				// scan for req rsp
 				case STATE_SCAN_REQ_RSP:
-					scan_req_evt_dispatch();
 					if (RADIO_EVENT(EVENTS_DISABLED))
 					{
 						sm_exit_scan_req_rsp();
@@ -657,26 +619,35 @@ __INLINE void ctrl_signal_handler(uint8_t sig)
 						// central sync packet
 						if(for_me==1)
 						{
+							scan_req_evt_dispatch();
 							generate_report(0x51,NULL);
 							deal_sync_packet();
 							send_rsp_packet();
-							exit_send_rsp_state();
 						}
 						// sensor rsp
 						else if(for_me==2)
 						{
-							int8_t rsp_sensor_index=is_sensor_rsp();
+							scan_req_evt_dispatch();
+							int8_t rsp_sensor_index=get_packet_index(ble_rx_buf);
 							generate_report(0x55+rsp_sensor_index,NULL);
 							// other sensor rsp packet
 							if((START_FLAG==1)&&(rsp_sensor_index!=-1))
 							{
 								deal_sensor_rsp_pkt(rsp_sensor_index);
 							}
+							sm_enter_scan_req_rsp();
 						}
-						sm_enter_scan_req_rsp();
+						else
+							sm_enter_scan_req_rsp();
 					}
 					break;
 #endif
+				case STATE_SEND_RSP:
+					generate_report(0x52,NULL);
+					exit_send_rsp_state();
+					sm_enter_scan_req_rsp();
+					break;
+				
 				// to be modified
 				case STATE_WAIT_FOR_IDLE:
 				/*
