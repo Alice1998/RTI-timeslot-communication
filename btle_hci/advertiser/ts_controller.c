@@ -236,35 +236,53 @@ void generate_report(uint8_t flag,uint8_t * const pkt)
 * Short check to verify that the incomming 
 * message was a scan request for this unit
 */
-static bool is_scan_req_for_me(void)
+static uint8_t is_central_req_sensor_rsq(void)
 {	
 	/* check CRC. Add to number of CRC faults if wrong */
-	/*
+
 	if (0 == NRF_RADIO->CRCSTATUS) 
 	{
 		++packet_count_invalid;
-		return false;
-	}
-	*/
-	
-	/* check message type and length */
-	
-	if ((0x3 != (0xF&ble_rx_buf[0])) || (0x0C != ble_rx_buf[1]))
-	{
-		++packet_count_invalid;
-		return false;
+		return 0;
 	}
 	/* check included ADV addr, which must match own ADV addr BLE_ADDR_LEN) */
 	if (memcmp(	(void*) GENERAL_SENSOR_ADDR, 
 							(void*) &ble_rx_buf[BLE_PAYLOAD_OFFSET], 2) != 0)
 	{
 		++packet_count_invalid;
+		return 0;
+	}
+	
+	if ((0xc3 == ble_rx_buf[0])) && (0x0C == ble_rx_buf[1]))
+	{
+		++packet_count_valid;
+		return 1;
+	}
+	// to be tested
+	if ((0x44 == ble_rx_buf[0])) && (0x25 == ble_rx_buf[1]))
+	{
+		++packet_count_valid;
+		return 2;
+	}
+	++packet_count_invalid;
+		return 0;
+}
+
+bool is_sensor_rsp(void)
+{
+	if (0 == NRF_RADIO->CRCSTATUS) 
+	{
+		++packet_count_invalid;
 		return false;
 	}
 	
-	/* all fields ok */
-	++packet_count_valid;
-	return true;
+	/* check message type and length */
+	
+	if ((0xc3 != ble_rx_buf[0])) || (0x0C != ble_rx_buf[1]))
+	{
+		++packet_count_invalid;
+		return false;
+	}
 }
 
 int8_t get_packet_index(uint8_t * const pkt)
@@ -372,10 +390,8 @@ static __INLINE void next_timeslot_schedule(void)
 		//g_timeslot_req_normal.params.normal.distance_us = ADV_INTERVAL_TRANSLATE(adv_int_min) + 1000 * ((rng_pool[pool_index++]) % (ADV_INTERVAL_TRANSLATE(adv_int_max - adv_int_min)));
 		g_signal_callback_return_param.params.request.p_next = &g_timeslot_req_normal;
 		g_signal_callback_return_param.callback_action = NRF_RADIO_SIGNAL_CALLBACK_ACTION_REQUEST_AND_END;
-		//NRF_TIMER0->TASKS_STOP = 1;
-		if(NRF_TIMER0->EVENTS_COMPARE[0]!=0)
-			periph_timer_abort(0);
-		//periph_timer_start(0,g_timeslot_req_normal.params.normal.distance_us,true);
+		//if(NRF_TIMER0->EVENTS_COMPARE[0]!=0)
+		//	periph_timer_abort(0);
 	}
 	else
 	{
@@ -405,7 +421,7 @@ static __INLINE void adv_evt_setup(void)
 ******************************************/
 static void sm_enter_adv_send(void)
 {
-	generate_report(0x0+START_FLAG*16,NULL);
+	//generate_report(0x0+START_FLAG*16,NULL);
 	sm_state = STATE_ADV_SEND;
 	periph_radio_ch_set(channel);
 	
@@ -428,7 +444,7 @@ static void sm_enter_adv_send(void)
 
 static void sm_exit_adv_send(void)
 {
-	generate_report(0x1+START_FLAG*16,NULL);
+	//generate_report(0x1+START_FLAG*16,NULL);
 	/* wipe events and interrupts triggered by this state */
 	periph_radio_intenclr(RADIO_INTENCLR_DISABLED_Msk);
 	PERIPHERAL_EVENT_CLR(NRF_RADIO->EVENTS_DISABLED);
@@ -441,8 +457,9 @@ static void sm_exit_adv_send(void)
 #if TS_SEND_SCAN_RSP
 static void sm_enter_scan_req_rsp(void)
 {
-	generate_report(0x2+START_FLAG*16,NULL);
+	//generate_report(0x2+START_FLAG*16,NULL);
 	sm_state = STATE_SCAN_REQ_RSP;
+	periph_radio_ch_set(channel);
 	periph_radio_packet_ptr_set(&ble_rx_buf[0]);
 	
 	periph_radio_shorts_set(	RADIO_SHORTS_READY_START_Msk | 
@@ -464,11 +481,11 @@ static void sm_enter_scan_req_rsp(void)
 
 static void sm_exit_scan_req_rsp(void)
 {
-	generate_report(0x3+START_FLAG*16,NULL);
+	//generate_report(0x3+START_FLAG*16,NULL);
 	//periph_timer_abort(0);
 	periph_radio_intenclr(RADIO_INTENCLR_DISABLED_Msk);
 	PERIPHERAL_EVENT_CLR(NRF_RADIO->EVENTS_DISABLED);
-	periph_ppi_clear(0);
+	//periph_ppi_clear(0);
 }
 #endif
 
@@ -503,16 +520,19 @@ static void deal_sync_packet(void)
 {
 	generate_report(0x30,NULL);
 	START_FLAG=1;
-	/* enable disabled interrupt to avoid race conditions */
-	periph_radio_intenset(RADIO_INTENSET_DISABLED_Msk);
 #if TS_SEND_SCAN_RSP		
-	uint32_t err_code = sd_radio_session_close ();
+	//uint32_t err_code = sd_radio_session_close ();
+
 	APP_ERROR_CHECK(err_code);
 #endif
 }
 
 static void send_rsp_packet(void)
 {
+
+	/* enable disabled interrupt to avoid race conditions */
+	periph_radio_intenset(RADIO_INTENSET_DISABLED_Msk);
+
 #if TS_SEND_SCAN_RSP		
 	/* need to answer request, set scan_rsp packet and 
 	let radio continue to send */
@@ -522,6 +542,15 @@ static void send_rsp_packet(void)
 	periph_radio_tifs_set(0);
 	scan_req_evt_dispatch();
 #endif
+}
+
+static void exit_send_rsp_state(void)
+{
+	periph_radio_intenclr(RADIO_INTENCLR_DISABLED_Msk);
+	PERIPHERAL_EVENT_CLR(NRF_RADIO->EVENTS_DISABLED);
+
+	//channel_iterate();
+	//return (channel > 39);
 }
 
 static bool sm_exit_wait_for_idle(void)
@@ -584,9 +613,15 @@ __INLINE void ctrl_signal_handler(uint8_t sig)
 	switch (sig)
 	{
 		case NRF_RADIO_CALLBACK_SIGNAL_TYPE_START:	
-			DEBUG_PIN_POKE(3);		
+			DEBUG_PIN_POKE(3);
+			periph_timer_start(0,g_timeslot_req_normal.params.normal.distance_us-500,true)		
 			adv_evt_setup();
-			sm_enter_adv_send();
+			if(START_FLAG==0)
+				sm_enter_adv_send();
+			else
+			{
+				sm_enter_scan_req_rsp();
+			}
 			periph_timer_start(0, (uint16_t)g_timeslot_req_earliest.params.normal.distance_us, true);
 			break;
 		
@@ -596,11 +631,10 @@ __INLINE void ctrl_signal_handler(uint8_t sig)
 			/* check state, and act accordingly */
 			switch (sm_state)
 			{
+				// just send the adv packet -> scan for req
 				case STATE_ADV_SEND:
 					if (RADIO_EVENT(EVENTS_DISABLED))
 					{
-						DEBUG_PIN_POKE(12);
-						DEBUG_PIN_POKE(13);
 						sm_exit_adv_send();
 #if TS_SEND_SCAN_RSP
 						// scan for req package
@@ -611,33 +645,35 @@ __INLINE void ctrl_signal_handler(uint8_t sig)
 #endif
 					}
 					break;
-#if TS_SEND_SCAN_RSP					
+#if TS_SEND_SCAN_RSP	
+				// scan for req rsp
 				case STATE_SCAN_REQ_RSP:
-					//generate_report(0x50,ble_rx_buf);
+					scan_req_evt_dispatch();
 					if (RADIO_EVENT(EVENTS_DISABLED))
 					{
-						//generate_report(0x50,ble_rx_buf);
-						DEBUG_PIN_POKE(12);
-						DEBUG_PIN_POKE(14);
-						// received req for sync
 						sm_exit_scan_req_rsp();
-						int8_t rsp_sensor_index=-1;
-						if(is_scan_req_for_me())
+						// received req for sync
+						uint8_t for_me=is_central_req_sensor_rsq();
+						// central sync packet
+						if(for_me==1)
 						{
+							generate_report(0x51,NULL);
 							deal_sync_packet();
-							sm_enter_scan_req_rsp();
+							send_rsp_packet();
+							exit_send_rsp_state();
 						}
-						else if(START_FLAG==1&&(rsp_sensor_index=is_sensor_rsp())!=-1)
+						// sensor rsp
+						else if(for_me==2)
 						{
-							deal_sensor_rsp_pkt(rsp_sensor_index);
-							sm_enter_scan_req_rsp();
+							int8_t rsp_sensor_index=is_sensor_rsp();
+							generate_report(0x55+rsp_sensor_index,NULL);
+							// other sensor rsp packet
+							if((START_FLAG==1)&&(rsp_sensor_index!=-1))
+							{
+								deal_sensor_rsp_pkt(rsp_sensor_index);
+							}
 						}
-						else
-						{
-							// to be tested
-							//sm_enter_adv_send();
-							sm_enter_scan_req_rsp();
-						}
+						sm_enter_scan_req_rsp();
 					}
 					break;
 #endif
@@ -673,47 +709,14 @@ __INLINE void ctrl_signal_handler(uint8_t sig)
 		
 #if TS_SEND_SCAN_RSP		
 		case NRF_RADIO_CALLBACK_SIGNAL_TYPE_TIMER0:
-			/*
-			generate_report(0x10);
-			DEBUG_PIN_POKE(5);
-			sm_exit_scan_req_rsp();
-			go to wait for idle, no packet was accepted 
-			sm_enter_wait_for_idle(false);
-	
-			PERIPHERAL_TASK_TRIGGER(NRF_RADIO->TASKS_DISABLE);
-			*/
-			switch(sm_state)
+			generate_report(0x10+sm_state,NULL);
+			if (NRF_TIMER0->EVENTS_COMPARE[0] != 0)
 			{
-				case STATE_ADV_SEND:
-					if(START_FLAG==0)
-					{
-						sm_exit_adv_send();
-						sm_enter_adv_send();
-					}
-					break;
-				
-				case STATE_SCAN_REQ_RSP:
-					sm_exit_scan_req_rsp();
-					//generate_report(0x20+START_FLAG,NULL);
-					if(START_FLAG==1)
-					{
-						// first one does not contain all sensor rssi
-						send_rsp_packet();
-						//memcpy(ble_scan_rsp_data,0,sizeof(ble_scan_rsp_data));
-						sm_enter_scan_req_rsp();
-					}
-					else
-					{
-						sm_enter_adv_send();
-					}
-
-					break;
-
-				default:
-					break;
-
+				periph_timer_abort(0);
+				next_timeslot_schedule();
+				//periph_radio_intenclr(RADIO_INTENCLR_DISABLED_Msk); ...
 			}
-			next_timeslot_schedule();
+			PERIPHERAL_TASK_TRIGGER(NRF_RADIO->TASKS_DISABLE);
 			break;
 #endif		
 
