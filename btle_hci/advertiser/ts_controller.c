@@ -158,7 +158,8 @@ static nrf_radio_request_t g_timeslot_req_normal =
 */			
 static __INLINE void channel_iterate(void)
 {
-	while (((channel_map & (1 << (++channel - 37))) == 0) && channel < 40);	
+	//while (((channel_map & (1 << (++channel - 37))) == 0) && channel < 40);	
+	channel++;
 }
 
 /**
@@ -284,15 +285,44 @@ static __INLINE void adv_evt_setup(void)
 
 
 
-
+uint8_t counter=0;
+uint8_t my_test_channel=0;
 
 /******************************************
 * Functions for start/end of adv_send state 
 ******************************************/
 static void sm_enter_adv_send(void)
 {
+	/*
+	nrf_report_t scan_req_report;
+	
+	scan_req_report.valid_packets = packet_count_valid;
+	scan_req_report.invalid_packets = packet_count_invalid;
+	 
+	scan_req_report.event.event_code = BTLE_VS_EVENT_NRF_LL_EVENT_SCAN_REQ_REPORT;
+	scan_req_report.event.opcode			= BTLE_CMD_NONE;
+	
+	uint8_t ble_buf[]={0x0,0x0,0x0,0x1,0x1,0x1};
+	
+	memcpy((void*) scan_req_report.event.params.nrf_scan_req_report_event.address, (void*) &ble_buf[0], 6);	
+	
+	scan_req_report.event.params.nrf_scan_req_report_event.rssi=0;
+	scan_req_report.event.params.nrf_scan_req_report_event.channel=channel;
+	
+	nrf_report_disp_dispatch(&scan_req_report);
+	*/
+	
+	counter++;
+	if (counter==100)
+	{
+		counter=0;
+		my_test_channel++;
+		if(my_test_channel==40)
+			my_test_channel=0;
+	}
+	
 	sm_state = STATE_ADV_SEND;
-	periph_radio_ch_set(channel);
+	periph_radio_ch_set(my_test_channel);
 	
 	/* trigger task early, the rest of the setup can be done in RXRU */
 	PERIPHERAL_TASK_TRIGGER(NRF_RADIO->TASKS_TXEN);
@@ -427,8 +457,8 @@ void ctrl_init(void)
 	
 
 	ble_adv_data[BLE_ADFLAG_OFFSET]  = 0x00;
-+ //ble_adv_data[BLE_ADFLAG_OFFSET] |= (1 << 1);  /* General discoverable mode */
-+ ble_adv_data[BLE_ADFLAG_OFFSET] |= (1 << 2);    /* BR/EDR not supported      */
+	//ble_adv_data[BLE_ADFLAG_OFFSET] |= (1 << 1);  /* General discoverable mode */
+  ble_adv_data[BLE_ADFLAG_OFFSET] |= (1 << 2);    /* BR/EDR not supported      */
 
 	/* set message length to only address */
 	ble_adv_data[BLE_SIZE_OFFSET] 			= 0x06;
@@ -559,7 +589,7 @@ bool ctrl_adv_param_set(btle_cmd_param_le_write_advertising_parameters_t* adv_pa
 
 
 	/* put address into advertisement packet buffer */
-	static uint8_t ble_addr[] = DEFAULT_DEVICE_ADDRESS;
+	static uint8_t ble_addr[] = {0x11, 0x22, 0x33, 0x44, 0x55, 0x66};
 	memcpy((void*) &ble_adv_data[BLE_ADDR_OFFSET],
 				 (void*) &ble_addr[0], BLE_ADDR_LEN);
 

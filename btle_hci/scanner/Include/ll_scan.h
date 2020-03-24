@@ -39,6 +39,7 @@
 
 #include <stdbool.h>
 
+void channel_plus(void);
 /** @brief Callback for events on the radio */
 void ll_scan_rx_cb (bool crc_valid);
 void ll_scan_timeout_cb (void);

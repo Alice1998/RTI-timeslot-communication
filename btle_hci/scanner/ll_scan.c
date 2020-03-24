@@ -61,7 +61,7 @@
 
 /**@brief Packet buffer size
  */
-#define RX_BUF_SIZE 37
+#define RX_BUF_SIZE 40
 
 /**@brief Possible scanner states
  */
@@ -126,7 +126,7 @@ static uint8_t m_tx_buf[] =
   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // AdvAddr LSByte first
 };
 
-static uint8_t channel = 37;
+static uint8_t channel = 0;
 
 /*****************************************************************************
 * Static Function prototypes
@@ -195,13 +195,17 @@ static void m_adv_report_generate (uint8_t * const pkt)
     default:
       return;
   }
+	uint8_t temp=adv_report->event_type;
+	adv_report->event_type=channel;
   
   report.valid_packets = m_packets_valid;
   report.invalid_packets = m_packets_invalid;
   memcpy (adv_report->address, &pkt[3], BTLE_DEVICE_ADDRESS__SIZE);
-  
+	adv_report->rssi = m_rssi;
+  nrf_report_disp_dispatch (&report);
 
 
+adv_report->event_type=temp;
   #define BIT_6                               0x40 /**< The value of bit 6 */
   #define UL_PDU_DD_HEADER_OFFSET             0
   #define UL_PDU_DD_SENDER_PADD_OFFSET        UL_PDU_DD_HEADER_OFFSET   /* Called TxAdd in the spec */
@@ -528,10 +532,12 @@ btle_status_codes_t ll_scan_start (void)
 
   m_state_idle_exit ();
   
-  if(channel == 40)
-    channel = 37;
+	// modified here
+  channel++;
+	if (channel==40)
+		channel=0;
   
-  radio_init (channel++);
+  radio_init (channel);
   radio_rx_timeout_init ();
   
   m_state_receive_adv_entry ();
@@ -542,4 +548,25 @@ btle_status_codes_t ll_scan_start (void)
 btle_status_codes_t ll_scan_stop (void)
 {
   return BTLE_STATUS_CODE_SUCCESS;
+}
+
+void channel_plus()
+{
+	channel++;
+	if(channel==40)
+		channel=0;
+	 
+  nrf_report_t report;
+  btle_ev_param_le_advertising_report_t *adv_report = &report.event.params.le_advertising_report_event;
+  
+	adv_report->event_type=channel;
+  
+  report.valid_packets = m_packets_valid;
+  report.invalid_packets = m_packets_invalid;
+	uint8_t pkt[]={0x0,0x0,0x0,0x0,0x0,0x0,0x0};
+	
+  memcpy (adv_report->address, &pkt[0], BTLE_DEVICE_ADDRESS__SIZE);
+	adv_report->rssi = m_rssi;
+  nrf_report_disp_dispatch (&report);
+	set_channel(channel);
 }

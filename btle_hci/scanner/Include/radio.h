@@ -42,6 +42,8 @@
 
 #define RADIO_RSSI_INVALID 255
 
+void set_channel(uint8_t ch);
+
 void radio_event_cb (void);
 void radio_timeout_cb (void);
 

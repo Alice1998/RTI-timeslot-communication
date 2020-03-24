@@ -137,11 +137,31 @@ __INLINE void periph_radio_tifs_set(uint8_t tifs)
 	NRF_RADIO->TIFS = tifs;
 }
 
+/* Does NOT work for ADV channels */
+uint8_t channel_resolver_get_frequency(uint8_t channel)
+{
+	uint8_t freq;
+	
+	/* Special cases for the advertise channels */
+	if(channel == 37)
+		freq = 2;
+	else if(channel == 38)
+		freq = 26;
+	else if(channel == 39)
+		freq = 80;
+	else
+		freq = channel + (channel < 11 ? 2 : 3) * 2; // Spec Vol. 6, Part B, 1.4.1
+
+	return freq;
+}
+
 __INLINE void periph_radio_ch_set(uint8_t ch)
 {
-	ASSERT(ch >= 37 && ch <= 39);
+	//ASSERT(ch >= 37 && ch <= 39);
 	
-	NRF_RADIO->FREQUENCY = freq_bins[ch - 37]; 
+	//NRF_RADIO->FREQUENCY = freq_bins[ch - 37]; 
+	NRF_RADIO->FREQUENCY=channel_resolver_get_frequency(ch);
+	
 	NRF_RADIO->DATAWHITEIV = ch;
 	DEBUG_PIN_POKE(0);
 }

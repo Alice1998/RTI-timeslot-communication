@@ -81,7 +81,7 @@ static nrf_radio_request_t m_timeslot_req_normal = {
 /*****************************************************************************
 * Static Functions
 *****************************************************************************/
-
+uint32_t flag=0;
 nrf_radio_signal_callback_return_param_t *radio_cb (uint8_t sig)
 {
   switch (sig)
@@ -92,9 +92,9 @@ nrf_radio_signal_callback_return_param_t *radio_cb (uint8_t sig)
       NRF_TIMER0->EVENTS_COMPARE[0] = 0;
       NRF_TIMER0->INTENSET = TIMER_INTENSET_COMPARE0_Msk;
       NRF_TIMER0->CC[0] = m_timeslot_req_normal.params.normal.length_us - 500;  
-
+      // called every timeslot
       ll_scan_start ();
-
+		
       m_signal_callback_return_param.callback_action = NRF_RADIO_SIGNAL_CALLBACK_ACTION_NONE;
       break;
 
@@ -107,6 +107,8 @@ nrf_radio_signal_callback_return_param_t *radio_cb (uint8_t sig)
       if (NRF_TIMER0->EVENTS_COMPARE[0] != 0)
       {
         ll_scan_stop ();
+				
+				
         
         NRF_TIMER0->EVENTS_COMPARE[0] = 0;
         NRF_TIMER0->INTENCLR = TIMER_INTENCLR_COMPARE0_Msk;

@@ -35,7 +35,7 @@
 #include "boards.h"
 
 #include "btle.h"
-#include "core_cmInstr.h"
+//#include "core_cmInstr.h"
 #include "nrf_adv_conn.h"
 #include "nrf_scan.h"
 
@@ -213,7 +213,7 @@ int main(void)
     {
       while (btle_scan_ev_get (&report) != BTLE_STATUS_CODE_COMMAND_DISALLOWED)
       {
-        __LOG("Type: %X, Addr: %X:%X:%X:%X:%X:%X, RSSI: %i",
+        __LOG("Channel: %d, Addr: %X:%X:%X:%X:%X:%X, RSSI: %i",
           report.event.params.le_advertising_report_event.event_type,
           report.event.params.le_advertising_report_event.address[5],
           report.event.params.le_advertising_report_event.address[4],

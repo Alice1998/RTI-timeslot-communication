@@ -71,7 +71,12 @@ static enum
 /*****************************************************************************
 * Interface Functions
 *****************************************************************************/
-
+void set_channel(uint8_t ch)
+{
+	NRF_RADIO->FREQUENCY = channel_resolver_get_frequency(ch);
+	NRF_RADIO->DATAWHITEIV = ch;
+}
+	
 void radio_init (uint8_t channel)
 {
   /* Enable power to RADIO */
