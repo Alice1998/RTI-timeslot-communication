@@ -481,7 +481,7 @@ static void sm_enter_wait_for_idle(bool req_rx_accepted)
 
 static void deal_sync_packet(void)
 {
-	generate_report(0x30,NULL);
+	//generate_report(0x30,NULL);
 	START_FLAG=1;
 #if TS_SEND_SCAN_RSP		
 	//uint32_t err_code = sd_radio_session_close ();
@@ -620,7 +620,7 @@ __INLINE void ctrl_signal_handler(uint8_t sig)
 						if(for_me==1)
 						{
 							scan_req_evt_dispatch();
-							generate_report(0x51,NULL);
+							generate_report(0x50,NULL);
 							deal_sync_packet();
 							send_rsp_packet();
 						}
@@ -643,7 +643,7 @@ __INLINE void ctrl_signal_handler(uint8_t sig)
 					break;
 #endif
 				case STATE_SEND_RSP:
-					generate_report(0x52,NULL);
+					//generate_report(0x52,NULL);
 					exit_send_rsp_state();
 					sm_enter_scan_req_rsp();
 					break;
@@ -680,7 +680,7 @@ __INLINE void ctrl_signal_handler(uint8_t sig)
 		
 #if TS_SEND_SCAN_RSP		
 		case NRF_RADIO_CALLBACK_SIGNAL_TYPE_TIMER0:
-			generate_report(0x10+sm_state,NULL);
+			//(0x10+sm_state,NULL);
 			if (NRF_TIMER0->EVENTS_COMPARE[0] != 0)
 			{
 				periph_timer_abort(0);

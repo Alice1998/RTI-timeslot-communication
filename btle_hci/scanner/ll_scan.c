@@ -140,7 +140,7 @@ static uint8_t SENSOR_MAX=32;
 static uint32_t sensor_adv_map=0;
 static uint8_t sensor_rsp_count=0;
 static uint8_t MY_ADV_PACKET_POS0_POS4[]={0x46,0x1E,0x00,0x30,0x30};
-static uint8_t MY_RSP_PACKET_POS0_POS4[]={0x44,0x25,0x00,0x30,0x30};
+static uint8_t c[]={0x44,0x25,0x00,0x30,0x30};
 static uint8_t link_rssi[31];
 static uint8_t sensor_adv_count=0;
 static uint8_t sync_flag=0; // to be modified!!
@@ -495,8 +495,15 @@ void ll_scan_rx_cb (bool crc_valid)
       if(sync_flag==1)
       {
         m_state_receive_adv_exit();
+        m_adv_report_generate (m_rx_buf);
 			  if (memcmp((void*)m_rx_buf,(void*)MY_RSP_PACKET_POS0_POS4,5)==0)
 				  m_adv_report_generate (m_rx_buf);
+        m_state_receive_adv_entry ();
+      }
+      else if(memcmp((void*)m_rx_buf,(void*)MY_RSP_PACKET_POS0_POS4,5)==0)
+      {
+        m_adv_report_generate (m_rx_buf);
+        data_report_generate(0x00,"sync_flag0_receive_rsp",sizeof("sync_flag0_receive_rsp"));
         m_state_receive_adv_entry ();
       }
       else
@@ -568,6 +575,7 @@ void ll_scan_rx_cb (bool crc_valid)
       m_packets_valid++;
 
       m_state_receive_scan_rsp_exit ();
+      m_adv_report_generate (m_rx_buf);
 			if (memcmp((void*)m_rx_buf,(void*)MY_RSP_PACKET_POS0_POS4,5)==0)
 				m_adv_report_generate (m_rx_buf);
       //m_state_receive_adv_entry ();
@@ -585,7 +593,7 @@ void ll_scan_tx_cb (void)
   if(sync_flag==1)
   {
     // just send the req
-    data_report_generate(m_scanner.state,"sync_flag=1_just_send_req_into_scan",sizeof("sync_flag=1_just_send_req_into_scan"));
+    //data_report_generate(m_scanner.state,"sync_flag=1_just_send_req_into_scan",sizeof("sync_flag=1_just_send_req_into_scan"));
     m_state_send_scan_req_exit ();
     m_state_receive_adv_entry();
   }
