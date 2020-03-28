@@ -275,7 +275,7 @@ void radio_tx_prepare (void)
   NRF_RADIO->TASKS_TXEN=1;
 	NRF_RADIO->EVENTS_READY=1;
   sprintf(&start_msg[0], "R:%X A:%X E:%X D:%X", NRF_RADIO->EVENTS_READY,NRF_RADIO->EVENTS_ADDRESS,NRF_RADIO->EVENTS_END,NRF_RADIO->EVENTS_DISABLED);
-  data_report_generate(NRF_RADIO->SHORTS,&start_msg[0],31);
+  //data_report_generate(NRF_RADIO->SHORTS,&start_msg[0],31);
 
 	m_radio_dir = RADIO_DIR_TX;
 		

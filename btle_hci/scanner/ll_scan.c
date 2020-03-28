@@ -253,10 +253,11 @@ static void m_adv_report_generate (uint8_t * const pkt)
 		{
 			return;
 		}
-		memcpy(adv_report->report_data, &pkt[9], BTLE_ADVERTISING_DATA__SIZE);
+		memcpy(adv_report->report_data, &pkt[0], BTLE_ADVERTISING_DATA__SIZE);
 	}
 	else
 		adv_report->length_data=0;
+	
 	
   adv_report->num_reports = 1;
   nrf_report_disp_dispatch (&report);
@@ -491,18 +492,20 @@ void ll_scan_rx_cb (bool crc_valid)
     /* Packet received */
     case SCANNER_STATE_RECEIVE_ADV:
       m_packets_valid++;
-
+			
       if(sync_flag==1)
       {
         m_state_receive_adv_exit();
-        m_adv_report_generate (m_rx_buf);
-			  if (memcmp((void*)m_rx_buf,(void*)MY_RSP_PACKET_POS0_POS4,5)==0)
-				  m_adv_report_generate (m_rx_buf);
+        //m_adv_report_generate (m_rx_buf);
+			  if (memcmp((void*)MY_RSP_PACKET_POS0_POS4,(void*)m_rx_buf,5)==0)
+				{
+					data_report_generate(0x00,"---receive_rsp---",sizeof("---receive_rsp---"));
+				}
         m_state_receive_adv_entry ();
       }
-      else if(memcmp((void*)m_rx_buf,(void*)MY_RSP_PACKET_POS0_POS4,5)==0)
+      else if(memcmp((void*)MY_RSP_PACKET_POS0_POS4,(void*)m_rx_buf,5)==0)
       {
-        m_adv_report_generate (m_rx_buf);
+        //m_adv_report_generate (m_rx_buf);
         data_report_generate(0x00,"sync_flag0_receive_rsp",sizeof("sync_flag0_receive_rsp"));
         m_state_receive_adv_entry ();
       }

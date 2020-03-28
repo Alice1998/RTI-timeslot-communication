@@ -223,8 +223,13 @@ int main(void)
 				switch(report.event.event_code)
 				{
 					case BTLE_EVENT_LE_ADVERTISING_REPORT:
-						__LOG("Type: %X, Addr: %X:%X:%X:%X:%X:%X, RSSI: %i, valid: %X, invalid: %X",
+						__LOG("Type: %X, INFO: %X %X %X. %X %X Addr: %X:%X:%X:%X:%X:%X, RSSI: %i, valid: %X, invalid: %X",
 							report.event.params.le_advertising_report_event.event_type,
+					report.event.params.le_advertising_report_event.report_data[0],
+					report.event.params.le_advertising_report_event.report_data[1],
+					report.event.params.le_advertising_report_event.report_data[2],
+					report.event.params.le_advertising_report_event.report_data[3],
+					report.event.params.le_advertising_report_event.report_data[4],
 							report.event.params.le_advertising_report_event.address[5],
 							report.event.params.le_advertising_report_event.address[4],
 							report.event.params.le_advertising_report_event.address[3],
