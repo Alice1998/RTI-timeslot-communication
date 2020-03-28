@@ -420,14 +420,13 @@ static void sm_exit_adv_send(void)
 #if TS_SEND_SCAN_RSP
 static void sm_enter_scan_req_rsp(void)
 {
-	//generate_report(0x2+START_FLAG*16,NULL);
 	sm_state = STATE_SCAN_REQ_RSP;
-	periph_radio_ch_set(channel);
-	periph_radio_packet_ptr_set(&ble_rx_buf[0]);
 	
+	PERIPHERAL_TASK_TRIGGER(NRF_RADIO->TASKS_RXEN);
+	periph_radio_packet_ptr_set(&ble_rx_buf[0]);
 	periph_radio_shorts_set(	RADIO_SHORTS_READY_START_Msk | 
 														RADIO_SHORTS_END_DISABLE_Msk |
-														RADIO_SHORTS_DISABLED_TXEN_Msk |
+														//RADIO_SHORTS_DISABLED_TXEN_Msk |
 														RADIO_SHORTS_ADDRESS_RSSISTART_Msk);
 	
 	periph_radio_intenset(	RADIO_INTENSET_DISABLED_Msk);
@@ -494,6 +493,7 @@ static void send_rsp_packet(void)
 {
 	sm_state=STATE_SEND_RSP;
 
+	periph_radio_shorts_set(0);
 	/* trigger task early, the rest of the setup can be done in RXRU */
 	PERIPHERAL_TASK_TRIGGER(NRF_RADIO->TASKS_TXEN);
 
@@ -506,11 +506,11 @@ static void send_rsp_packet(void)
 	let radio continue to send */
 	periph_radio_packet_ptr_set(&ble_scan_rsp_data[0]);
 	periph_radio_shorts_set(	RADIO_SHORTS_READY_START_Msk | 
-														RADIO_SHORTS_END_DISABLE_Msk |
-														RADIO_SHORTS_DISABLED_RXEN_Msk);
+														RADIO_SHORTS_END_DISABLE_Msk);
+														//RADIO_SHORTS_DISABLED_RXEN_Msk);
 	periph_radio_intenset(RADIO_INTENSET_DISABLED_Msk);
 	// to be tested
-	//periph_radio_tifs_set(100);
+	//periph_radio_tifs_set(150);
 	//scan_req_evt_dispatch();
 #endif
 }
@@ -621,6 +621,7 @@ __INLINE void ctrl_signal_handler(uint8_t sig)
 				case STATE_SCAN_REQ_RSP:
 					if (RADIO_EVENT(EVENTS_DISABLED))
 					{
+						//generate_report(0x50,ble_rx_buf);
 						sm_exit_scan_req_rsp();
 						// received req for sync
 						uint8_t for_me=is_central_req_sensor_rsq();
