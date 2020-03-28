@@ -401,7 +401,7 @@ void SWI0_IRQHandler(void)
         if (report.event.params.le_advertising_report_event.report_data[0]==0x50)
 				{
 					//if(report.event.params.le_advertising_report_event.report_data[1]==0xc3)
-						snprintf(buf,256,"general report: %X %X %X : %X %X %X %X %X %X : %X %X %X %X %X %X \r\n",
+						snprintf(buf,256,"general report: %X %X %X %X %X %X : %X %X %X %X - %X %X %X %X %X \r\n",
           report.event.params.le_advertising_report_event.report_data[1],
           report.event.params.le_advertising_report_event.report_data[2],
           report.event.params.le_advertising_report_event.report_data[3],

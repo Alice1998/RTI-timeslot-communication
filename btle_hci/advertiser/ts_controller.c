@@ -433,7 +433,7 @@ static void sm_enter_scan_req_rsp(void)
 	periph_radio_intenset(	RADIO_INTENSET_DISABLED_Msk);
 	
 	/* change the tifs in order to be able to capture all packets */
-	periph_radio_tifs_set(148);
+	//periph_radio_tifs_set(148);
 	
 	/* start the timer that aborts the RX if no address is received. */
 	//periph_timer_start(0, 200, true);
@@ -467,8 +467,8 @@ static void sm_enter_wait_for_idle(bool req_rx_accepted)
 	{
 #if TS_SEND_SCAN_RSP		
 		// send_rsp_packet();
-		uint32_t err_code = sd_radio_session_close ();
-		APP_ERROR_CHECK(err_code);
+		//uint32_t err_code = sd_radio_session_close ();
+		//APP_ERROR_CHECK(err_code);
 #endif		
 	}
 	else
@@ -493,16 +493,24 @@ static void deal_sync_packet(void)
 static void send_rsp_packet(void)
 {
 	sm_state=STATE_SEND_RSP;
+
+	/* trigger task early, the rest of the setup can be done in RXRU */
+	PERIPHERAL_TASK_TRIGGER(NRF_RADIO->TASKS_TXEN);
+
+
 	/* enable disabled interrupt to avoid race conditions */
-	periph_radio_intenset(RADIO_INTENSET_DISABLED_Msk);
+	//periph_radio_intenset(RADIO_INTENSET_DISABLED_Msk);
 
 #if TS_SEND_SCAN_RSP		
 	/* need to answer request, set scan_rsp packet and 
 	let radio continue to send */
 	periph_radio_packet_ptr_set(&ble_scan_rsp_data[0]);
-	periph_radio_shorts_set(RADIO_SHORTS_READY_START_Msk | RADIO_SHORTS_END_DISABLE_Msk);
+	periph_radio_shorts_set(	RADIO_SHORTS_READY_START_Msk | 
+														RADIO_SHORTS_END_DISABLE_Msk |
+														RADIO_SHORTS_DISABLED_RXEN_Msk);
+	periph_radio_intenset(RADIO_INTENSET_DISABLED_Msk);
 	// to be tested
-	periph_radio_tifs_set(100);
+	//periph_radio_tifs_set(100);
 	//scan_req_evt_dispatch();
 #endif
 }
@@ -620,7 +628,6 @@ __INLINE void ctrl_signal_handler(uint8_t sig)
 						if(for_me==1)
 						{
 							scan_req_evt_dispatch();
-							generate_report(0x50,NULL);
 							deal_sync_packet();
 							send_rsp_packet();
 						}
@@ -643,7 +650,7 @@ __INLINE void ctrl_signal_handler(uint8_t sig)
 					break;
 #endif
 				case STATE_SEND_RSP:
-					//generate_report(0x52,NULL);
+					generate_report(0x51,NULL);
 					exit_send_rsp_state();
 					sm_enter_scan_req_rsp();
 					break;
