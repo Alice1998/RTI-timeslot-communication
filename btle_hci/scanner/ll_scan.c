@@ -140,7 +140,7 @@ static uint8_t SENSOR_MAX=32;
 static uint32_t sensor_adv_map=0;
 static uint8_t sensor_rsp_count=0;
 static uint8_t MY_ADV_PACKET_POS0_POS4[]={0x46,0x1E,0x00,0x30,0x30};
-static uint8_t c[]={0x44,0x25,0x00,0x30,0x30};
+static uint8_t MY_RSP_PACKET_POS0_POS4[]={0x44,0x25,0x00,0x30,0x30};
 static uint8_t link_rssi[31];
 static uint8_t sensor_adv_count=0;
 static uint8_t sync_flag=0; // to be modified!!
