@@ -130,7 +130,7 @@ static uint8_t m_tx_buf[] =
   0x30, 0x30, 0x00, 0x00, 0x00, 0x00, // AdvAddr LSByte first
 };
 
-#define ALL_SENSOR_COUNT 1
+#define ALL_SENSOR_COUNT 2
 
 static uint8_t channel = 37;
 
@@ -499,14 +499,15 @@ void ll_scan_rx_cb (bool crc_valid)
         //m_adv_report_generate (m_rx_buf);
 			  if (memcmp((void*)MY_RSP_PACKET_POS0_POS4,(void*)m_rx_buf,5)==0)
 				{
-					data_report_generate(0x00,"---receive_rsp---",sizeof("---receive_rsp---"));
+					data_report_generate(get_packet_index(m_rx_buf),"---receive_rsp---",sizeof("---receive_rsp---"));
 				}
         m_state_receive_adv_entry ();
       }
       else if(memcmp((void*)MY_RSP_PACKET_POS0_POS4,(void*)m_rx_buf,5)==0)
       {
         //m_adv_report_generate (m_rx_buf);
-        data_report_generate(0x00,"sync_flag0_receive_rsp",sizeof("sync_flag0_receive_rsp"));
+				// central reset while sensor does not reset.
+        //data_report_generate(0x00,"sync_flag0_receive_rsp",sizeof("sync_flag0_receive_rsp"));
         m_state_receive_adv_entry ();
       }
       else
@@ -766,7 +767,8 @@ btle_status_codes_t ll_scan_start (void)
   if(channel == 40)
     channel = 37;
   
-  radio_init (channel++);
+  //radio_init (channel++);
+	radio_init(37);
   //radio_rx_timeout_init ();
 	
 	if (all_sensor_started())

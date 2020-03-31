@@ -107,6 +107,7 @@ static btle_adv_interval_t adv_int_max;
 /* statemachine state */
 static ts_state_t sm_state;
 static uint8_t START_FLAG=0;
+static uint8_t REQ_TIMESLOT_COUNT=0;
 
 /* advertisement param->type to spec type map */
 static const uint8_t ble_adv_type_raw[] = {0, 1, 6, 2};
@@ -133,7 +134,7 @@ static nrf_radio_request_t g_timeslot_req_earliest =
 			.params.earliest = {
 						HFCLK, 
 						NRF_RADIO_PRIORITY_NORMAL, 
-						TIMESLOT_INTERVAL_100MS,		
+						TIMESLOT_INTERVAL_100MS/5,		
 						10000}
 			};
 
@@ -143,8 +144,8 @@ static nrf_radio_request_t g_timeslot_req_normal =
 			.params.normal = {
 						HFCLK, 
 						NRF_RADIO_PRIORITY_NORMAL, 
-						TIMESLOT_INTERVAL_100MS,	
-						TIMESLOT_INTERVAL_100MS}
+						TIMESLOT_INTERVAL_100MS/5,	
+						TIMESLOT_INTERVAL_100MS/5}
 			};
 
 
@@ -482,6 +483,7 @@ static void deal_sync_packet(void)
 {
 	//generate_report(0x30,NULL);
 	START_FLAG=1;
+	REQ_TIMESLOT_COUNT=1;
 #if TS_SEND_SCAN_RSP		
 	//uint32_t err_code = sd_radio_session_close ();
 
@@ -510,7 +512,7 @@ static void send_rsp_packet(void)
 														//RADIO_SHORTS_DISABLED_RXEN_Msk);
 	periph_radio_intenset(RADIO_INTENSET_DISABLED_Msk);
 	// to be tested
-	//periph_radio_tifs_set(150);
+	periph_radio_tifs_set(150);
 	//scan_req_evt_dispatch();
 #endif
 }
@@ -585,15 +587,18 @@ __INLINE void ctrl_signal_handler(uint8_t sig)
 	{
 		case NRF_RADIO_CALLBACK_SIGNAL_TYPE_START:	
 			DEBUG_PIN_POKE(3);
-			periph_timer_start(0,g_timeslot_req_normal.params.normal.distance_us-500,true);		
+			periph_timer_start(0,(uint16_t)g_timeslot_req_normal.params.normal.distance_us-500,true);		
 			adv_evt_setup();
 			if(START_FLAG==0)
 				sm_enter_adv_send();
 			else
 			{
-				sm_enter_scan_req_rsp();
+				REQ_TIMESLOT_COUNT+=1;
+				//generate_report(REQ_TIMESLOT_COUNT,NULL);
+				send_rsp_packet();
+				//sm_enter_scan_req_rsp();
 			}
-			periph_timer_start(0, (uint16_t)g_timeslot_req_earliest.params.normal.distance_us, true);
+			//periph_timer_start(0, (uint16_t)g_timeslot_req_earliest.params.normal.distance_us, true);
 			break;
 		
 		case NRF_RADIO_CALLBACK_SIGNAL_TYPE_RADIO:
