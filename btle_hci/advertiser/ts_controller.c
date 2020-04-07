@@ -119,6 +119,9 @@ static uint8_t rng_pool[255];
 static uint8_t pool_index = 0;
 
 static uint8_t GENERAL_SENSOR_ADDR[]={0x30,0x30,0x00,0x00,0x00,0x00};
+static uint8_t TEST_RSP[]={0x44,0x25,0x0,0x30,0x30};
+static uint8_t TEST_REQ[]={0xc3,0x0c,0x0};
+
 
 /*****************************************************************************
 * Globals
@@ -134,7 +137,7 @@ static nrf_radio_request_t g_timeslot_req_earliest =
 			.params.earliest = {
 						HFCLK, 
 						NRF_RADIO_PRIORITY_NORMAL, 
-						TIMESLOT_INTERVAL_100MS/5,		
+						TIMESLOT_INTERVAL_100MS/40,		
 						10000}
 			};
 
@@ -144,8 +147,8 @@ static nrf_radio_request_t g_timeslot_req_normal =
 			.params.normal = {
 						HFCLK, 
 						NRF_RADIO_PRIORITY_NORMAL, 
-						TIMESLOT_INTERVAL_100MS/5,	
-						TIMESLOT_INTERVAL_100MS/5}
+						TIMESLOT_INTERVAL_100MS/40,	
+						TIMESLOT_INTERVAL_100MS/40}
 			};
 
 
@@ -246,21 +249,16 @@ static uint8_t is_central_req_sensor_rsq(void)
 		++packet_count_invalid;
 		return 0;
 	}
-	/* check included ADV addr, which must match own ADV addr BLE_ADDR_LEN) */
-	if (memcmp(	(void*) GENERAL_SENSOR_ADDR, 
-							(void*) &ble_rx_buf[BLE_PAYLOAD_OFFSET], 2) != 0)
-	{
-		++packet_count_invalid;
-		return 0;
-	}
 	
-	if ((0xc3 == ble_rx_buf[0]) && (0x0C == ble_rx_buf[1]))
+	
+	if ((memcmp(	(void*)TEST_REQ, (void*) &ble_rx_buf[0], 3) == 0) &&(memcmp(	(void*) GENERAL_SENSOR_ADDR, 
+							(void*) &ble_rx_buf[BLE_PAYLOAD_OFFSET], 2) == 0))
 	{
 		++packet_count_valid;
 		return 1;
 	}
-	// to be tested
-	if ((0x44 == ble_rx_buf[0]) && (0x25 == ble_rx_buf[1]))
+	
+	if (memcmp(	(void*)TEST_RSP, (void*) &ble_rx_buf[0], 5) == 0)
 	{
 		++packet_count_valid;
 		return 2;
@@ -633,14 +631,14 @@ __INLINE void ctrl_signal_handler(uint8_t sig)
 						// central sync packet
 						if(for_me==1)
 						{
-							scan_req_evt_dispatch();
+							//scan_req_evt_dispatch();
 							deal_sync_packet();
 							send_rsp_packet();
 						}
 						// sensor rsp
 						else if(for_me==2)
 						{
-							scan_req_evt_dispatch();
+							//scan_req_evt_dispatch();
 							int8_t rsp_sensor_index=get_packet_index(ble_rx_buf);
 							generate_report(0x55+rsp_sensor_index,NULL);
 							// other sensor rsp packet
@@ -656,7 +654,7 @@ __INLINE void ctrl_signal_handler(uint8_t sig)
 					break;
 #endif
 				case STATE_SEND_RSP:
-					generate_report(0x51,NULL);
+					//generate_report(0x51,NULL);
 					exit_send_rsp_state();
 					sm_enter_scan_req_rsp();
 					break;

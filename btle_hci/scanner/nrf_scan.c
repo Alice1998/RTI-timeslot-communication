@@ -64,7 +64,7 @@ static nrf_radio_request_t m_timeslot_req_earliest = {
   .params.earliest = {
     NRF_RADIO_HFCLK_CFG_DEFAULT,
     NRF_RADIO_PRIORITY_NORMAL,
-    100000,
+    5000,
     TIMESLOT_TIMEOUT_US
   }
 };
@@ -73,8 +73,8 @@ static nrf_radio_request_t m_timeslot_req_normal = {
   .params.normal = {
     NRF_RADIO_HFCLK_CFG_DEFAULT,
     NRF_RADIO_PRIORITY_NORMAL,
-    100000,
-		100000,
+    5000,
+		5000,
   }
 };
 

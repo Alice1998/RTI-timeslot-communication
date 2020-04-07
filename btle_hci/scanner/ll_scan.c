@@ -435,7 +435,7 @@ int8_t get_packet_index(uint8_t * const pkt)
 
 void deal_sensor_adv(uint8_t index)
 {
-	m_adv_report_generate (m_rx_buf);
+	//m_adv_report_generate (m_rx_buf);
 	uint32_t flag=1<<index;
 	if ((sensor_adv_map&flag)==0)
 	{
