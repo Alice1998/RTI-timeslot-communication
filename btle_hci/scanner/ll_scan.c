@@ -126,8 +126,6 @@ static uint8_t m_tx_buf[] =
   0xC3,                               // BLE Header (PDU_TYPE: SCAN_REQ, TXadd: 1 (random address), RXadd: 1 (random address)
   0x0C,                               // Length of payload: 12
   0x00,                               // Padding bits for S1 (REF: the  nRF51 reference manual 16.1.2)
-  0x20, 0x20, 0x20, 0x20, 0x20, 0x00, // InitAddr LSByte first #local addr
-  0x30, 0x30, 0x00, 0x00, 0x00, 0x00, // AdvAddr LSByte first
 };
 
 #define ALL_SENSOR_COUNT 2
@@ -139,8 +137,8 @@ static uint8_t SENSOR_MAX=32;
 
 static uint32_t sensor_adv_map=0;
 static uint8_t sensor_rsp_count=0;
-static uint8_t MY_ADV_PACKET_POS0_POS4[]={0x46,0x1E,0x00,0x30,0x30};
-static uint8_t MY_RSP_PACKET_POS0_POS4[]={0x44,0x25,0x00,0x30,0x30};
+static uint8_t MY_ADV_PACKET_POS0_POS2[]={0x46,0x20,0x00};
+static uint8_t MY_RSP_PACKET_POS0_POS2[]={0x44,0x1F,0x00};
 static uint8_t link_rssi[31];
 static uint8_t sensor_adv_count=0;
 static uint8_t sync_flag=0; // to be modified!!
@@ -182,10 +180,9 @@ void get_app_timer_time()
 	
 }
 
-
-static void m_adv_report_generate (uint8_t * const pkt)
+// adv or rsp
+static void m_adv_report_generate(uint8_t * const pkt)
 {
-  bool has_data = false;
   nrf_report_t report;
   btle_ev_param_le_advertising_report_t *adv_report = &report.event.params.le_advertising_report_event;
   
@@ -197,44 +194,20 @@ static void m_adv_report_generate (uint8_t * const pkt)
 
   report.event.event_code = BTLE_EVENT_LE_ADVERTISING_REPORT;
   report.event.opcode = BTLE_CMD_NONE;
-  
-  switch (pkt[0] & 0x0F)
+
+  adv_report->event_type=pkt[0];
+  adv_report->length_data=0;
+  if(pkt[0]==MY_RSP_PACKET_POS0_POS2[0])
   {
-    case PACKET_TYPE_ADV_IND:
-      has_data = true;
-      adv_report->event_type = BTLE_REPORT_TYPE_ADV_IND; //0x0
-      break;
-
-		// this is needed
-    case PACKET_TYPE_ADV_SCAN_IND:
-      has_data = true;
-      adv_report->event_type = BTLE_REPORT_TYPE_ADV_SCAN_IND; //0x2
-      break;
-
-    case PACKET_TYPE_ADV_DIRECT_IND: 
-      has_data = false;
-      adv_report->event_type = BTLE_REPORT_TYPE_ADV_DIRECT_IND; //0x1
-      break;
-
-    case PACKET_TYPE_ADV_NONCONN_IND:
-      has_data = true;
-      adv_report->event_type = BTLE_REPORT_TYPE_ADV_NONCONN_IND; //0x3
-      break;
-    
-    case PACKET_TYPE_SCAN_RSP:
-      has_data = true;
-      adv_report->event_type = BTLE_REPORT_TYPE_SCAN_RSP;
-      break;
-    
-    default:
-      return;
+    adv_report->length_data=31;
+    memcpy(adv_report->report_data, &pkt[3], BTLE_ADVERTISING_DATA__SIZE);
   }
-  
+
   report.valid_packets = m_packets_valid;
   report.invalid_packets = m_packets_invalid;
-  memcpy (adv_report->address, &pkt[3], BTLE_DEVICE_ADDRESS__SIZE);
+  memset(adv_report->address,0,6)
+  memcpy (adv_report->address, &pkt[1], 2);
   
-
 
   #define BIT_6                               0x40 /**< The value of bit 6 */
   #define UL_PDU_DD_HEADER_OFFSET             0
@@ -244,19 +217,6 @@ static void m_adv_report_generate (uint8_t * const pkt)
   
   adv_report->address_type = (pkt[UL_PDU_DD_SENDER_PADD_OFFSET] & UL_PDU_DD_SENDER_PADD_MASK) >> UL_PDU_DD_SENDER_PADD_SHIFT;
   adv_report->rssi = m_rssi;
-  
-	// 3 6 31 or 3 6 24
-	if(has_data)
-	{
-		adv_report->length_data = (pkt[1]) - BTLE_DEVICE_ADDRESS__SIZE;
-		if (adv_report->length_data > 0x1F)
-		{
-			return;
-		}
-		memcpy(adv_report->report_data, &pkt[0], BTLE_ADVERTISING_DATA__SIZE);
-	}
-	else
-		adv_report->length_data=0;
 	
 	
   adv_report->num_reports = 1;
@@ -277,12 +237,6 @@ void data_report_generate(uint8_t flag,char *const pkt,uint8_t pkt_size)
   
   data_report->num_reports = 1;
 	
-	// to be tested
-  /*
-	memcpy(data_report->report_data,link_rssi,31);
-	for(uint8_t i=0;i<31;i++)
-		link_rssi[i]=0;
-	*/
 
 	data_report->event_type=flag;
   memcpy(data_report->report_data,pkt,pkt_size);
@@ -401,35 +355,7 @@ static void m_state_receive_scan_rsp_exit (void)
 
 int8_t get_packet_index(uint8_t * const pkt)
 {
-	int8_t index=-1;
-	uint8_t flag=0;
-	for(uint8_t i=5;i<9;i++)
-	{
-		if (pkt[i]==0)
-			index+=8;
-		else
-		{
-			uint8_t value=pkt[i];
-			for(uint8_t j=0;j<8;j++)
-			{
-				if((value&0x1)==1)
-				{
-					if (flag!=0)
-						return -1;
-					else
-					{
-						flag=1;
-						index+=j;
-						index+=1;
-					}
-				}
-				value=value>>1;
-			}
-			break;
-		}
-	}
-	return index;
-	
+  return pkt[1];
 }
 
 
@@ -497,13 +423,13 @@ void ll_scan_rx_cb (bool crc_valid)
       {
         m_state_receive_adv_exit();
         //m_adv_report_generate (m_rx_buf);
-			  if (memcmp((void*)MY_RSP_PACKET_POS0_POS4,(void*)m_rx_buf,5)==0)
+        if(MY_RSP_PACKET_POS0_POS2[0]==m_rx_buf[0] && MY_RSP_PACKET_POS0_POS2[1]==m_rx_buf[1]+m_rx_buf[2])
 				{
 					data_report_generate(get_packet_index(m_rx_buf),"---receive_rsp---",sizeof("---receive_rsp---"));
 				}
         m_state_receive_adv_entry ();
       }
-      else if(memcmp((void*)MY_RSP_PACKET_POS0_POS4,(void*)m_rx_buf,5)==0)
+      else if(MY_RSP_PACKET_POS0_POS2[0]==m_rx_buf[0] && MY_RSP_PACKET_POS0_POS2[1]==m_rx_buf[1]+m_rx_buf[2])
       {
         //m_adv_report_generate (m_rx_buf);
 				// central reset while sensor does not reset.
@@ -540,10 +466,10 @@ void ll_scan_rx_cb (bool crc_valid)
 					// this is the type for sensor adv
         case PACKET_TYPE_ADV_SCAN_IND:
           m_state_receive_adv_exit ();
-          if (memcmp((void*)MY_ADV_PACKET_POS0_POS4,(void*)m_rx_buf,5)==0)
+          if (m_rx_buf[0]==MY_ADV_PACKET_POS0_POS2[0]&&(m_rx_buf[1]+m_rx_buf[2]==MY_ADV_PACKET_POS0_POS2[1]))
           {
             index=get_packet_index(m_rx_buf);
-            if (index!=-1&&index<SENSOR_MAX)
+            if (index<SENSOR_MAX)
             {
               deal_sensor_adv(index);
             }
@@ -580,7 +506,7 @@ void ll_scan_rx_cb (bool crc_valid)
 
       m_state_receive_scan_rsp_exit ();
       m_adv_report_generate (m_rx_buf);
-			if (memcmp((void*)m_rx_buf,(void*)MY_RSP_PACKET_POS0_POS4,5)==0)
+			if (MY_RSP_PACKET_POS0_POS2[0]==m_rx_buf[0] && MY_RSP_PACKET_POS0_POS2[1]==m_rx_buf[1]+m_rx_buf[2])
 				m_adv_report_generate (m_rx_buf);
       //m_state_receive_adv_entry ();
       m_state_receive_scan_rsp_entry();

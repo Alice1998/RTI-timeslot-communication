@@ -44,7 +44,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // sensor index modified here
 #define UNIQUE_INDEX 1
-static uint8_t unique_ble_addr[] = {0x30, 0x30, 0x02, 0x00, 0x00, 0x00};
 
 #define HFCLK                   NRF_RADIO_HFCLK_CFG_FORCE_XTAL
 #define TIMESLOT_LENGTH         4300

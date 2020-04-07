@@ -71,12 +71,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 /* Buffer for advertisement data */
-static uint8_t adv_data_local[BLE_ADDR_OFFSET + BLE_ADDR_LEN + BLE_PAYLOAD_MAXLEN];
+static uint8_t adv_data_local[3];
 
 #if TS_SEND_SCAN_RSP
 /* Buffer for scan response data, only available in scan request/response mode,
 * see define at top */
-static uint8_t ble_scan_rsp_data[BLE_ADDR_LEN + BLE_PAYLOAD_MAXLEN];
+static uint8_t ble_scan_rsp_data[34];
 
 /* Buffer for any message receiving, only available in scan request/response mode,
 * see define at top */
@@ -118,9 +118,8 @@ static uint8_t rng_pool[255];
 /* A pointer into our pool. Will wrap around upon overflow */
 static uint8_t pool_index = 0;
 
-static uint8_t GENERAL_SENSOR_ADDR[]={0x30,0x30,0x00,0x00,0x00,0x00};
-static uint8_t TEST_RSP[]={0x44,0x25,0x0,0x30,0x30};
 static uint8_t TEST_REQ[]={0xc3,0x0c,0x0};
+static uint8_t TEST_RSP[]={0x44,0x1F,0x0};
 
 
 /*****************************************************************************
@@ -194,6 +193,7 @@ static __INLINE void scan_addr_get(btle_address_type_t *addr_type, uint8_t* addr
 /**
 * Get data from rx-buffer and dispatch scan req event
 */
+// unused currently
 static __INLINE void scan_req_evt_dispatch(void)
 {
 	/* prepare scan req report */
@@ -249,20 +249,17 @@ static uint8_t is_central_req_sensor_rsq(void)
 		++packet_count_invalid;
 		return 0;
 	}
-	
-	
-	if ((memcmp(	(void*)TEST_REQ, (void*) &ble_rx_buf[0], 3) == 0) &&(memcmp(	(void*) GENERAL_SENSOR_ADDR, 
-							(void*) &ble_rx_buf[BLE_PAYLOAD_OFFSET], 2) == 0))
+	if(memcpy((void *)ble_rx_buf,(void *)TEST_REQ,3))
 	{
 		++packet_count_valid;
 		return 1;
 	}
-	
-	if (memcmp(	(void*)TEST_RSP, (void*) &ble_rx_buf[0], 5) == 0)
+	if(ble_rx_buf[0]==TEST_RSP[0] && ble_rx_buf[1]+ble_rx_buf[2]==TEST_RSP[1])
 	{
 		++packet_count_valid;
 		return 2;
 	}
+	
 	++packet_count_invalid;
 		return 0;
 }
@@ -271,34 +268,7 @@ static uint8_t is_central_req_sensor_rsq(void)
 
 int8_t get_packet_index(uint8_t * const pkt)
 {
-	int8_t index=-1;
-	uint8_t flag=0;
-	for(uint8_t i=5;i<9;i++)
-	{
-		if (pkt[i]==0)
-			index+=8;
-		else
-		{
-			uint8_t value=pkt[i];
-			for(uint8_t j=0;j<8;j++)
-			{
-				if((value&0x1)==1)
-				{
-					if (flag!=0)
-						return -1;
-					else
-					{
-						flag=1;
-						index+=j;
-						index+=1;
-					}
-				}
-				value=value>>1;
-			}
-			break;
-		}
-	}
-	return index;
+	return pkt[1];
 }
 
 
@@ -315,9 +285,8 @@ static void deal_sensor_rsp_pkt(int8_t index)
 	// to be modified
 	sensor_rsp_report.event.event_code = BTLE_VS_EVENT_NRF_LL_EVENT_SCAN_REQ_REPORT;
 	sensor_rsp_report.event.opcode			= BTLE_CMD_NONE;
-	
-	scan_addr_get(&sensor_rsp_report.event.params.nrf_scan_req_report_event.address_type, 
-									sensor_rsp_report.event.params.nrf_scan_req_report_event.address);
+
+	sensor_rsp_report.event.params.nrf_scan_req_report_event.address[0]=index;
 	
 	
 	periph_radio_rssi_read(&(sensor_rsp_report.event.params.nrf_scan_req_report_event.rssi));
@@ -325,11 +294,11 @@ static void deal_sensor_rsp_pkt(int8_t index)
 	
 	if (index>UNIQUE_INDEX)
 	{
-		ble_scan_rsp_data[BLE_PAYLOAD_OFFSET+index-1]=sensor_rsp_report.event.params.nrf_scan_req_report_event.rssi;
+		ble_scan_rsp_data[1+index]=sensor_rsp_report.event.params.nrf_scan_req_report_event.rssi;
 	}
 	else if (index<UNIQUE_INDEX)
 	{
-		ble_scan_rsp_data[BLE_PAYLOAD_OFFSET+index]=sensor_rsp_report.event.params.nrf_scan_req_report_event.rssi;
+		ble_scan_rsp_data[2+index]=sensor_rsp_report.event.params.nrf_scan_req_report_event.rssi;
 	}
 
 	/* send scan req event to user space */
@@ -545,9 +514,9 @@ void ctrl_init(void)
 	that is in line with BLE spec */
 	
 	/* erase package buffers */
-	memset(&adv_data_local[0], 0, 40);
+	memset(&adv_data_local[0], 0, 3);
 #if TS_SEND_SCAN_RSP	
-	memset(&ble_scan_rsp_data[0], 0, 40);
+	memset(&ble_scan_rsp_data[0], 0, 34);
 #endif 
 	
 #if TS_SEND_SCAN_RSP	
@@ -561,14 +530,13 @@ void ctrl_init(void)
 #endif
 	
 
-	adv_data_local[BLE_ADFLAG_OFFSET]  = 0x00;
-	//adv_data_local[BLE_ADFLAG_OFFSET] |= (1 << 1);  /* General discoverable mode */
-  adv_data_local[BLE_ADFLAG_OFFSET] |= (1 << 2);    /* BR/EDR not supported      */
+	adv_data_local[1]  = UNIQUE_INDEX;
+	adv_data_local[2]=0x20-UNIQUE_INDEX;
 
-	/* set message length to only address */
-	adv_data_local[BLE_SIZE_OFFSET] 			= 0x06;
+	
 #if TS_SEND_SCAN_RSP
-	ble_scan_rsp_data[BLE_SIZE_OFFSET] 	= 0x06;
+	ble_scan_rsp_data[1] 	= UNIQUE_INDEX;
+	ble_scan_rsp_data[2] 	= TEST_RSP[0]-UNIQUE_INDEX;
 #endif	
 	
 	/* generate rng sequence */
@@ -642,7 +610,7 @@ __INLINE void ctrl_signal_handler(uint8_t sig)
 							int8_t rsp_sensor_index=get_packet_index(ble_rx_buf);
 							generate_report(0x55+rsp_sensor_index,NULL);
 							// other sensor rsp packet
-							if((START_FLAG==1)&&(rsp_sensor_index!=-1))
+							if(START_FLAG==1)
 							{
 								deal_sensor_rsp_pkt(rsp_sensor_index);
 							}
@@ -732,30 +700,6 @@ bool ctrl_adv_param_set(btle_cmd_param_le_write_advertising_parameters_t* adv_pa
 
 	/* set channel map */
 	channel_map = adv_params->channel_map;
-
-
-	/* put address into advertisement packet buffer */
-	//static uint8_t ble_addr[] = 000000;
-	// copied from main.c
-	//static uint8_t ble_addr[] = {0x4e, 0x6f, 0x72, 0x64, 0x69, 0x63};
-	//DEFAULT_DEVICE_ADDRESS;
-	memcpy((void*) &adv_data_local[BLE_ADDR_OFFSET],
-				 (void*) &unique_ble_addr[0], BLE_ADDR_LEN);
-
-#if TS_SEND_SCAN_RSP
-	/* put address into scan response packet buffer */
-	//memcpy((void*) &ble_scan_rsp_data[BLE_ADDR_OFFSET],(void*) &adv_params->direct_address[0], BLE_ADDR_LEN);
-	memcpy((void*) &ble_scan_rsp_data[BLE_ADDR_OFFSET], 
-					(void*) &unique_ble_addr[0], BLE_ADDR_LEN);
-#endif
-	
-	/* address type */
-	adv_data_local[BLE_TYPE_OFFSET] &= BLE_ADDR_TYPE_MASK;
-	adv_data_local[BLE_TYPE_OFFSET] |= (adv_params->own_address_type) << 6;
-#if TS_SEND_SCAN_RSP
-	ble_scan_rsp_data[BLE_TYPE_OFFSET] &= BLE_ADDR_TYPE_MASK;
-	ble_scan_rsp_data[BLE_TYPE_OFFSET] |= (adv_params->own_address_type) << 6;
-#endif
 	
 	/* whitelist */
 	if (BTLE_ADV_FILTER_ALLOW_ANY 		== adv_params->filter_policy || 
@@ -771,20 +715,6 @@ bool ctrl_adv_param_set(btle_cmd_param_le_write_advertising_parameters_t* adv_pa
 	/* Advertisement interval */
 	adv_int_min = adv_params->interval_min;
 	adv_int_max = adv_params->interval_max;
-
-#if TS_SEND_SCAN_RSP	
-	/* adv type */
-	adv_data_local[BLE_TYPE_OFFSET] &= ~BLE_TYPE_MASK;
-	adv_data_local[BLE_TYPE_OFFSET] |= (ble_adv_type_raw[adv_params->type] & BLE_TYPE_MASK);
-
-	/* scan rsp type */
-	ble_scan_rsp_data[BLE_TYPE_OFFSET] &= ~BLE_TYPE_MASK;
-	ble_scan_rsp_data[BLE_TYPE_OFFSET] |= 0x04;
-#else
-	/* adv type is locked to nonconn */
-	adv_data_local[BLE_TYPE_OFFSET] &= ~BLE_TYPE_MASK;
-	adv_data_local[BLE_TYPE_OFFSET] |= (ble_adv_type_raw[BTLE_ADV_TYPE_NONCONN_IND] & BLE_TYPE_MASK);
-#endif
 	return true;
 }
 
@@ -802,19 +732,6 @@ void ctrl_timeslot_abort(void)
 bool ctrl_adv_data_set(btle_cmd_param_le_write_advertising_data_t* adv_data)
 {	
 	ASSERT(adv_data != NULL);
-	
-	/* length cannot exceed 31 bytes */
-	uint8_t len = ((adv_data->data_length <= BLE_PAYLOAD_MAXLEN)? 
-									adv_data->data_length : 
-									BLE_PAYLOAD_MAXLEN);
-
-	/* put into packet buffer */
-	memcpy((void*) &adv_data_local[BLE_PAYLOAD_OFFSET], 
-					(void*) &adv_data->advertising_data[0], len);
-
-	/* set length of packet in length byte. Account for 6 address bytes */
-	adv_data_local[BLE_SIZE_OFFSET] &= 0x00;
-	adv_data_local[BLE_SIZE_OFFSET] = (BLE_ADDR_LEN + len);
 
 	return true;
 }
@@ -823,20 +740,6 @@ bool ctrl_scan_data_set(btle_cmd_param_le_write_scan_response_data_t* data)
 {
 #if TS_SEND_SCAN_RSP	
 	ASSERT(data != NULL);
-
-	/* length cannot exceed 31 bytes */
-	uint8_t len = ((data->data_length <= BLE_PAYLOAD_MAXLEN)? 
-									data->data_length : 
-									BLE_PAYLOAD_MAXLEN);
-
-	/* put into packet buffer */
-	memcpy((void*) &ble_scan_rsp_data[BLE_PAYLOAD_OFFSET], 
-					(void*) &data->response_data[0], len);
-
-	/* set length of packet in length byte. Account for 3 header bytes
-	* and 6 address bytes */
-	ble_scan_rsp_data[BLE_SIZE_OFFSET] = (BLE_ADDR_LEN + len);
-#endif	
 
 	return true;
 }

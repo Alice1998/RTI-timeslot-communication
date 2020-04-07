@@ -223,18 +223,19 @@ int main(void)
 				switch(report.event.event_code)
 				{
 					case BTLE_EVENT_LE_ADVERTISING_REPORT:
-						__LOG("Type: %X, INFO: %X %X %X. %X %X Addr: %X:%X:%X:%X:%X:%X, RSSI: %i, valid: %X, invalid: %X",
+          if(report.event.params.le_advertising_report_event.event_type==0x46)
+          	__LOG("Type: %X, Addr: %X, RSSI: %i, valid: %X, invalid: %X",
 							report.event.params.le_advertising_report_event.event_type,
-					report.event.params.le_advertising_report_event.report_data[0],
-					report.event.params.le_advertising_report_event.report_data[1],
-					report.event.params.le_advertising_report_event.report_data[2],
-					report.event.params.le_advertising_report_event.report_data[3],
-					report.event.params.le_advertising_report_event.report_data[4],
-							report.event.params.le_advertising_report_event.address[5],
-							report.event.params.le_advertising_report_event.address[4],
-							report.event.params.le_advertising_report_event.address[3],
-							report.event.params.le_advertising_report_event.address[2],
-							report.event.params.le_advertising_report_event.address[1],
+							report.event.params.le_advertising_report_event.address[0],
+							report.event.params.le_advertising_report_event.rssi,
+							report.valid_packets,
+							report.invalid_packets);
+          else if(report.event.params.le_advertising_report_event.event_type==0x44)
+						__LOG("Type: %X, INFO: %X %X %X. Addr: %X, RSSI: %i, valid: %X, invalid: %X",
+							report.event.params.le_advertising_report_event.event_type,
+              report.event.params.le_advertising_report_event.report_data[0],
+              report.event.params.le_advertising_report_event.report_data[1],
+              report.event.params.le_advertising_report_event.report_data[2],
 							report.event.params.le_advertising_report_event.address[0],
 							report.event.params.le_advertising_report_event.rssi,
 							report.valid_packets,
