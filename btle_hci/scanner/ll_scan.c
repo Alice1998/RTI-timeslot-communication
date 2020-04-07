@@ -206,7 +206,7 @@ static void m_adv_report_generate(uint8_t * const pkt)
   report.valid_packets = m_packets_valid;
   report.invalid_packets = m_packets_invalid;
   memset(adv_report->address,0,6);
-  adv_report->address=pkt[2];
+  adv_report->address[0]=pkt[2];
   
 
   #define BIT_6                               0x40 /**< The value of bit 6 */
