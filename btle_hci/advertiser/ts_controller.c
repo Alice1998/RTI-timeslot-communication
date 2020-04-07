@@ -71,12 +71,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 /* Buffer for advertisement data */
-static uint8_t adv_data_local[3];
+static uint8_t adv_data_local[4];
 
 #if TS_SEND_SCAN_RSP
 /* Buffer for scan response data, only available in scan request/response mode,
 * see define at top */
-static uint8_t ble_scan_rsp_data[34];
+static uint8_t ble_scan_rsp_data[35];
 
 /* Buffer for any message receiving, only available in scan request/response mode,
 * see define at top */
@@ -207,8 +207,9 @@ static __INLINE void scan_req_evt_dispatch(void)
 	scan_req_report.event.event_code = BTLE_VS_EVENT_NRF_LL_EVENT_SCAN_REQ_REPORT;
 	scan_req_report.event.opcode			= BTLE_CMD_NONE;
 	
-	scan_addr_get(&scan_req_report.event.params.nrf_scan_req_report_event.address_type, 
-									scan_req_report.event.params.nrf_scan_req_report_event.address);
+	//scan_addr_get(&scan_req_report.event.params.nrf_scan_req_report_event.address_type, scan_req_report.event.params.nrf_scan_req_report_event.address);
+	scan_req_report.event.params.nrf_scan_req_report_event.address[0]=ble_rx_buf[1];
+	
 	
 	periph_radio_rssi_read(&(scan_req_report.event.params.nrf_scan_req_report_event.rssi));
 	periph_radio_channel_get(&(scan_req_report.event.params.nrf_scan_req_report_event.channel));
@@ -247,14 +248,14 @@ static uint8_t is_central_req_sensor_rsq(void)
 	if (0 == NRF_RADIO->CRCSTATUS) 
 	{
 		++packet_count_invalid;
-		return 0;
+		return -1;
 	}
-	if(memcpy((void *)ble_rx_buf,(void *)TEST_REQ,3))
+	if(memcmp((void *)ble_rx_buf,(void *)TEST_REQ,3)==0)
 	{
 		++packet_count_valid;
 		return 1;
 	}
-	if(ble_rx_buf[0]==TEST_RSP[0] && ble_rx_buf[1]+ble_rx_buf[2]==TEST_RSP[1])
+	if(ble_rx_buf[0]==TEST_RSP[0])
 	{
 		++packet_count_valid;
 		return 2;
@@ -531,12 +532,12 @@ void ctrl_init(void)
 	
 
 	adv_data_local[1]  = UNIQUE_INDEX;
-	adv_data_local[2]=0x20-UNIQUE_INDEX;
+	adv_data_local[2]=0x20- UNIQUE_INDEX;
 
 	
 #if TS_SEND_SCAN_RSP
 	ble_scan_rsp_data[1] 	= UNIQUE_INDEX;
-	ble_scan_rsp_data[2] 	= TEST_RSP[0]-UNIQUE_INDEX;
+	ble_scan_rsp_data[2] 	= TEST_RSP[1]- UNIQUE_INDEX;
 #endif	
 	
 	/* generate rng sequence */
@@ -597,6 +598,8 @@ __INLINE void ctrl_signal_handler(uint8_t sig)
 						// received req for sync
 						uint8_t for_me=is_central_req_sensor_rsq();
 						// central sync packet
+						if(ble_rx_buf[0]==0x44)
+							generate_report(for_me,NULL);
 						if(for_me==1)
 						{
 							//scan_req_evt_dispatch();
@@ -606,9 +609,9 @@ __INLINE void ctrl_signal_handler(uint8_t sig)
 						// sensor rsp
 						else if(for_me==2)
 						{
-							//scan_req_evt_dispatch();
+							scan_req_evt_dispatch();
 							int8_t rsp_sensor_index=get_packet_index(ble_rx_buf);
-							generate_report(0x55+rsp_sensor_index,NULL);
+							//generate_report(0x55+rsp_sensor_index,NULL);
 							// other sensor rsp packet
 							if(START_FLAG==1)
 							{
@@ -629,25 +632,6 @@ __INLINE void ctrl_signal_handler(uint8_t sig)
 				
 				// to be modified
 				case STATE_WAIT_FOR_IDLE:
-				/*
-					if (RADIO_EVENT(EVENTS_DISABLED))
-					{
-						DEBUG_PIN_POKE(12);
-						DEBUG_PIN_POKE(15);
-						state exit function returns whether the adv event is complete
-						bool adv_evt_done = sm_exit_wait_for_idle();
-						
-						if (adv_evt_done)
-						{
-							generate_report(1);
-							next_timeslot_schedule();
-						}
-						else
-						{
-							sm_enter_adv_send();
-						}
-					}
-				*/
 					break;							
 			
 				default:
@@ -740,6 +724,6 @@ bool ctrl_scan_data_set(btle_cmd_param_le_write_scan_response_data_t* data)
 {
 #if TS_SEND_SCAN_RSP	
 	ASSERT(data != NULL);
-
+#endif
 	return true;
 }

@@ -223,14 +223,14 @@ int main(void)
 				switch(report.event.event_code)
 				{
 					case BTLE_EVENT_LE_ADVERTISING_REPORT:
-          if(report.event.params.le_advertising_report_event.event_type==0x46)
+          if(report.event.params.le_advertising_report_event.report_data[0]==0x46)
           	__LOG("Type: %X, Addr: %X, RSSI: %i, valid: %X, invalid: %X",
 							report.event.params.le_advertising_report_event.event_type,
 							report.event.params.le_advertising_report_event.address[0],
 							report.event.params.le_advertising_report_event.rssi,
 							report.valid_packets,
 							report.invalid_packets);
-          else if(report.event.params.le_advertising_report_event.event_type==0x44)
+          else if(report.event.params.le_advertising_report_event.report_data[0]==0x44)
 						__LOG("Type: %X, INFO: %X %X %X. Addr: %X, RSSI: %i, valid: %X, invalid: %X",
 							report.event.params.le_advertising_report_event.event_type,
               report.event.params.le_advertising_report_event.report_data[0],
@@ -244,7 +244,7 @@ int main(void)
 							
 							//RSSI Data current debug
 					case BTLE_VS_EVENT_NRF_LL_EVENT_SCAN_REQ_REPORT:
-						__LOG("type %X, info: %s",report.event.params.le_advertising_report_event.event_type,
+						__LOG("type %X, info: %s",report.event.params.le_advertising_report_event.address[0],
                   report.event.params.le_advertising_report_event.report_data);
 						/*for(uint8_t j=0;j<report.event.params.le_advertising_report_event.length_data;j++)
 						{
