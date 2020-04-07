@@ -206,7 +206,7 @@ static void m_adv_report_generate(uint8_t * const pkt)
   report.valid_packets = m_packets_valid;
   report.invalid_packets = m_packets_invalid;
   memset(adv_report->address,0,6);
-  memcpy (adv_report->address, &pkt[1], 2);
+  adv_report->address=pkt[2];
   
 
   #define BIT_6                               0x40 /**< The value of bit 6 */
@@ -355,7 +355,7 @@ static void m_state_receive_scan_rsp_exit (void)
 
 int8_t get_packet_index(uint8_t * const pkt)
 {
-  return pkt[1];
+  return pkt[2];
 }
 
 
@@ -423,7 +423,7 @@ void ll_scan_rx_cb (bool crc_valid)
       {
         m_state_receive_adv_exit();
         //m_adv_report_generate (m_rx_buf);
-        if(MY_RSP_PACKET_POS0_POS2[0]==m_rx_buf[0])
+        if(memcmp((void *)MY_RSP_PACKET_POS0_POS2,(void *)m_rx_buf,2)==0)
 				{
 					//data_report_generate(get_packet_index(m_rx_buf),"---receive_rsp---",sizeof("---receive_rsp---"));
 					data_report_generate(m_rx_buf[2],"---receive_rsp---",sizeof("---receive_rsp---"));
@@ -431,7 +431,7 @@ void ll_scan_rx_cb (bool crc_valid)
 				}
         m_state_receive_adv_entry ();
       }
-      else if(MY_RSP_PACKET_POS0_POS2[0]==m_rx_buf[0])
+      else if(memcmp((void *)MY_RSP_PACKET_POS0_POS2,(void *)m_rx_buf,2)==0)
       {
         //m_adv_report_generate (m_rx_buf);
 				// central reset while sensor does not reset.
@@ -472,7 +472,7 @@ void ll_scan_rx_cb (bool crc_valid)
 				//data_report_generate(m_rx_buf[1],"t1",sizeof("test"));
 				//data_report_generate(m_rx_buf[2],"r2",sizeof("test"));
           //if (m_rx_buf[0]==MY_ADV_PACKET_POS0_POS2[0]&&(m_rx_buf[1]+m_rx_buf[2]==MY_ADV_PACKET_POS0_POS2[1]))
-				if (m_rx_buf[0]==MY_ADV_PACKET_POS0_POS2[0])
+				 if(memcmp((void *)MY_ADV_PACKET_POS0_POS2,(void *)m_rx_buf,2)==0)
           {
             index=get_packet_index(m_rx_buf);
 						//data_report_generate(index,"test",sizeof("test"));
@@ -512,7 +512,7 @@ void ll_scan_rx_cb (bool crc_valid)
       m_packets_valid++;
 
       m_state_receive_scan_rsp_exit ();
-			if (MY_RSP_PACKET_POS0_POS2[0]==m_rx_buf[0])
+			if(memcmp((void *)MY_RSP_PACKET_POS0_POS2,(void *)m_rx_buf,2)==0)
 				m_adv_report_generate (m_rx_buf);
       //m_state_receive_adv_entry ();
       m_state_receive_scan_rsp_entry();
