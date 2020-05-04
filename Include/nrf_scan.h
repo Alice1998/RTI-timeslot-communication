@@ -57,4 +57,7 @@ btle_status_codes_t btle_scan_param_set (btle_cmd_param_le_write_scan_parameters
 /* Enable or disable scanning */
 btle_status_codes_t btle_scan_enable_set (btle_cmd_param_le_write_scan_enable_t param);
 
+uint8_t** read_rssi_matrix();
+
+
 #endif /* __SCANNER_H__ */

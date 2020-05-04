@@ -41,6 +41,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "app_timer.h"
 
@@ -130,6 +131,7 @@ static uint8_t m_tx_buf[] =
 
 #define ALL_SENSOR_COUNT 2
 
+
 static uint8_t channel = 37;
 
 // protocol data
@@ -139,7 +141,7 @@ static uint32_t sensor_adv_map=0;
 static uint8_t sensor_rsp_count=0;
 static uint8_t MY_ADV_PACKET_POS0_POS2[]={0x46,0x20,0x00};
 static uint8_t MY_RSP_PACKET_POS0_POS2[]={0x44,0x1F,0x00};
-static uint8_t link_rssi[31];
+static uint8_t sensor_packet_count[31];
 static uint8_t sensor_adv_count=0;
 static uint8_t sync_flag=0; // to be modified!!
 
@@ -165,7 +167,20 @@ static void m_state_receive_scan_rsp_exit (void);
 /*****************************************************************************
 * Static Function definitions
 *****************************************************************************/
+uint8_t **rssi_matrix_data;
 
+void init_rssi_matrix()
+{
+	rssi_matrix_data=(uint8_t**)malloc(31*sizeof(uint8_t*));
+	for(int i=0;i<31;i++)
+	rssi_matrix_data[i]=(uint8_t*)malloc(31*sizeof(uint8_t));
+	//memset(rssi_matrix,0,sizeof(rssi_matrix));
+}
+uint8_t** get_rssi_data()
+{
+	return rssi_matrix_data;
+}
+	
 
 app_timer_id_t my_timer;
 uint32_t app_timer_counter=0;
@@ -197,6 +212,7 @@ static void m_adv_report_generate(uint8_t * const pkt)
 
 	adv_report->length_data=0;
 	adv_report->report_data[0]=pkt[0];
+	
   if(pkt[0]==MY_RSP_PACKET_POS0_POS2[0])
   {
    adv_report->length_data=ALL_SENSOR_COUNT-1;
@@ -222,6 +238,32 @@ static void m_adv_report_generate(uint8_t * const pkt)
   adv_report->num_reports = 1;
   nrf_report_disp_dispatch (&report);
 }
+
+
+static void matrix_data_dispatch()
+{
+  nrf_report_t report;
+  btle_ev_param_le_advertising_report_t *adv_report = &report.event.params.le_advertising_report_event;
+
+  report.event.event_code = BTLE_EVENT_LE_ADVERTISING_REPORT;
+  report.event.opcode = BTLE_CMD_NONE;
+
+	
+  adv_report->report_data[0]=0x0;
+  adv_report->length_data=ALL_SENSOR_COUNT-1;
+  memcpy(&(adv_report->report_data[1]), sensor_packet_count, ALL_SENSOR_COUNT);
+  
+
+  report.valid_packets = m_packets_valid;
+  report.invalid_packets = m_packets_invalid;
+  memset(adv_report->address,0,6);
+  
+  adv_report->num_reports = 1;
+  nrf_report_disp_dispatch (&report);
+}
+
+
+
 
 void data_report_generate(uint8_t flag,char *const pkt,uint8_t pkt_size)
 {
@@ -288,11 +330,12 @@ static void m_state_receive_adv_entry (void)
   m_scanner.state = SCANNER_STATE_RECEIVE_ADV;
 	if(change_flag)
 		return;
+	/*
 	if(sync_flag)
 		data_report_generate(m_scanner.state,"enter_rsp_scan",sizeof("enter_rsp_scan"));
 	else
 		data_report_generate(m_scanner.state,"enter_adv_scan",sizeof("enter_adv_scan"));
-		
+	*/
 }
 
 static void m_state_receive_adv_exit (void)
@@ -312,13 +355,13 @@ static void m_state_send_scan_req_entry (void)
   
   m_scanner.state = SCANNER_STATE_SEND_REQ;
 	char* LOG_DATA="enter_send_req";
-  data_report_generate(m_scanner.state,LOG_DATA,sizeof("enter_send_req"));
+  // data_report_generate(m_scanner.state,LOG_DATA,sizeof("enter_send_req")); log_data
 }
 
 static void m_state_send_scan_req_exit (void)
 {
   /* Nothing to do */
-  data_report_generate(m_scanner.state,"exit_send_req",sizeof("exit_send_req"));
+  //data_report_generate(m_scanner.state,"exit_send_req",sizeof("exit_send_req")); log_data
 }
 
 static void m_state_receive_scan_rsp_entry (void)
@@ -340,13 +383,13 @@ static void m_state_receive_scan_rsp_entry (void)
   */
   
   m_scanner.state = SCANNER_STATE_RECEIVE_SCAN_RSP;
-  data_report_generate(m_scanner.state,"enter_receive_rsp",sizeof("enter_receive_rsp"));
+  //data_report_generate(m_scanner.state,"enter_receive_rsp",sizeof("enter_receive_rsp")); log_data
 }
 
 static void m_state_receive_scan_rsp_exit (void)
 {
   m_rssi = radio_rssi_get ();
-   data_report_generate(m_scanner.state,"exit_receive_rsp",sizeof("exit_receive_rsp"));
+  //data_report_generate(m_scanner.state,"exit_receive_rsp",sizeof("exit_receive_rsp")); log_data
 }
 
 /*****************************************************************************
@@ -426,6 +469,9 @@ void ll_scan_rx_cb (bool crc_valid)
         if(memcmp((void *)MY_RSP_PACKET_POS0_POS2,(void *)m_rx_buf,2)==0)
 				{
 					//data_report_generate(m_rx_buf[2],"---receive_rsp---",sizeof("---receive_rsp---"));
+					uint8_t index=m_rx_buf[2]-1;
+					sensor_packet_count[index]++;
+					memcpy(rssi_matrix_data[index],&m_rx_buf[3],ALL_SENSOR_COUNT);
 					m_adv_report_generate(m_rx_buf);	
 				}
         m_state_receive_adv_entry ();
@@ -466,10 +512,6 @@ void ll_scan_rx_cb (bool crc_valid)
 				
 					// this is the type for sensor adv
         case PACKET_TYPE_ADV_SCAN_IND:
-          m_state_receive_adv_exit ();
-				//data_report_generate(m_rx_buf[0],"ans0",sizeof("test"));
-				//data_report_generate(m_rx_buf[1],"t1",sizeof("test"));
-				//data_report_generate(m_rx_buf[2],"r2",sizeof("test"));
           //if (m_rx_buf[0]==MY_ADV_PACKET_POS0_POS2[0]&&(m_rx_buf[1]+m_rx_buf[2]==MY_ADV_PACKET_POS0_POS2[1]))
 				 if(memcmp((void *)MY_ADV_PACKET_POS0_POS2,(void *)m_rx_buf,2)==0)
           {
@@ -577,7 +619,6 @@ void ll_scan_timeout_cb (void)
 
 void send_req_for_sync(void)
 {
-  //data_report_generate(m_scanner.state,"in_sync_func:state",sizeof("in_sync_func:state"));
   if(sync_flag==1)
   {
     m_state_receive_adv_exit();
@@ -597,6 +638,8 @@ void send_req_for_sync(void)
       break;
     }
   sync_flag=1;
+	matrix_data_dispatch();
+	memset(sensor_packet_count,0,ALL_SENSOR_COUNT);
   m_state_send_scan_req_entry();
 }
 

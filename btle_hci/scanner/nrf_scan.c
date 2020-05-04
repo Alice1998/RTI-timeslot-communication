@@ -146,6 +146,10 @@ nrf_radio_signal_callback_return_param_t *radio_cb (uint8_t sig)
 * Interface Functions
 *****************************************************************************/
 
+uint8_t** read_rssi_matrix()
+{
+	return get_rssi_data();
+}
 btle_status_codes_t btle_scan_init (IRQn_Type irq)
 {
   uint32_t err_code = NRF_SUCCESS;
@@ -158,6 +162,8 @@ btle_status_codes_t btle_scan_init (IRQn_Type irq)
   {
     status = BTLE_STATUS_CODE_COMMAND_DISALLOWED;
   }
+	
+	init_rssi_matrix();
   
   return status;
 }

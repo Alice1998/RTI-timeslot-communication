@@ -213,6 +213,8 @@ int main(void)
   __LOG(start_msg);
 
   nrf_adv_conn_init ();
+	
+	uint8_t ** rssi_data=read_rssi_matrix();
 
   while (true)
   {
@@ -237,6 +239,11 @@ int main(void)
               report.event.params.le_advertising_report_event.report_data[2],
               report.event.params.le_advertising_report_event.report_data[3],
 							report.event.params.le_advertising_report_event.rssi);
+					else if(report.event.params.le_advertising_report_event.report_data[0]==0x00)
+						__LOG("Count: %i %i. Matrix: %i %i %i %i",
+							report.event.params.le_advertising_report_event.report_data[1],
+              report.event.params.le_advertising_report_event.report_data[2],
+					rssi_data[0][0],rssi_data[0][1],rssi_data[1][0],rssi_data[1][1]);
 							break;
 							
 							//RSSI Data current debug
