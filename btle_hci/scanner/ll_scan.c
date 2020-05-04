@@ -128,7 +128,7 @@ static uint8_t m_tx_buf[] =
   0x00,                               // Padding bits for S1 (REF: the  nRF51 reference manual 16.1.2)
 };
 
-#define ALL_SENSOR_COUNT 2
+#define ALL_SENSOR_COUNT 3
 
 static uint8_t channel = 37;
 
