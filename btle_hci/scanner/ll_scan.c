@@ -128,7 +128,7 @@ static uint8_t m_tx_buf[] =
   0x00,                               // Padding bits for S1 (REF: the  nRF51 reference manual 16.1.2)
 };
 
-#define ALL_SENSOR_COUNT 3
+#define ALL_SENSOR_COUNT 2
 
 static uint8_t channel = 37;
 
@@ -199,8 +199,8 @@ static void m_adv_report_generate(uint8_t * const pkt)
 	adv_report->report_data[0]=pkt[0];
   if(pkt[0]==MY_RSP_PACKET_POS0_POS2[0])
   {
-    adv_report->length_data=31;
-    memcpy(&adv_report->report_data[1], &pkt[3], BTLE_ADVERTISING_DATA__SIZE);
+   adv_report->length_data=ALL_SENSOR_COUNT-1;
+   memcpy(&(adv_report->report_data[1]), &pkt[3], ALL_SENSOR_COUNT-1);
   }
 
   report.valid_packets = m_packets_valid;
@@ -425,9 +425,8 @@ void ll_scan_rx_cb (bool crc_valid)
         //m_adv_report_generate (m_rx_buf);
         if(memcmp((void *)MY_RSP_PACKET_POS0_POS2,(void *)m_rx_buf,2)==0)
 				{
-					//data_report_generate(get_packet_index(m_rx_buf),"---receive_rsp---",sizeof("---receive_rsp---"));
-					data_report_generate(m_rx_buf[2],"---receive_rsp---",sizeof("---receive_rsp---"));
-					
+					//data_report_generate(m_rx_buf[2],"---receive_rsp---",sizeof("---receive_rsp---"));
+					m_adv_report_generate(m_rx_buf);	
 				}
         m_state_receive_adv_entry ();
       }

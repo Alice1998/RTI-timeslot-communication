@@ -289,17 +289,12 @@ static void deal_sensor_rsp_pkt(int8_t index)
 	
 	periph_radio_rssi_read(&(sensor_rsp_report.event.params.nrf_scan_req_report_event.rssi));
 	periph_radio_channel_get(&(sensor_rsp_report.event.params.nrf_scan_req_report_event.channel));
-	
-	if (index>UNIQUE_INDEX)
-	{
-		generate_report(2+index,NULL);
-		ble_scan_rsp_data[2+index]=sensor_rsp_report.event.params.nrf_scan_req_report_event.rssi;
-	}
-	else if (index<UNIQUE_INDEX)
-	{
-		generate_report(3+index,NULL);
-		ble_scan_rsp_data[3+index]=sensor_rsp_report.event.params.nrf_scan_req_report_event.rssi;
-	}
+
+	ble_scan_rsp_data[2+index]=sensor_rsp_report.event.params.nrf_scan_req_report_event.rssi;
+
+	sensor_rsp_report.event.params.nrf_scan_req_report_event.address[1]=index;
+	sensor_rsp_report.event.params.nrf_scan_req_report_event.address[2]=UNIQUE_INDEX;
+	sensor_rsp_report.event.params.nrf_scan_req_report_event.address[3]=ble_scan_rsp_data[2+index];
 
 	/* send scan req event to user space */
 	nrf_report_disp_dispatch(&sensor_rsp_report);
@@ -592,7 +587,7 @@ __INLINE void ctrl_signal_handler(uint8_t sig)
 						// sensor rsp
 						else if(for_me==2)
 						{
-							scan_req_evt_dispatch();
+							//scan_req_evt_dispatch();
 							int8_t rsp_sensor_index=get_packet_index(ble_rx_buf);
 							//generate_report(0x55+rsp_sensor_index,NULL);
 							// other sensor rsp packet

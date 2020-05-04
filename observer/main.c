@@ -231,15 +231,12 @@ int main(void)
 							report.valid_packets,
 							report.invalid_packets);
           else if(report.event.params.le_advertising_report_event.report_data[0]==0x44)
-						__LOG("Type: %X, INFO: %X %X %X. Addr: %X, RSSI: %i, valid: %X, invalid: %X",
-							report.event.params.le_advertising_report_event.event_type,
-              report.event.params.le_advertising_report_event.report_data[0],
+						__LOG("[RSP] Sensor: %i, INFO: %i %i %i. RSSI: %i",
+							report.event.params.le_advertising_report_event.address[0],
               report.event.params.le_advertising_report_event.report_data[1],
               report.event.params.le_advertising_report_event.report_data[2],
-							report.event.params.le_advertising_report_event.address[0],
-							report.event.params.le_advertising_report_event.rssi,
-							report.valid_packets,
-							report.invalid_packets);
+              report.event.params.le_advertising_report_event.report_data[3],
+							report.event.params.le_advertising_report_event.rssi);
 							break;
 							
 							//RSSI Data current debug

@@ -382,12 +382,13 @@ void SWI0_IRQHandler(void)
     switch (report.event.event_code)
     {
       case BTLE_VS_EVENT_NRF_LL_EVENT_SCAN_REQ_REPORT:
-        snprintf(buf, 256, "Received scan rsp on ch. %i. Sensor: %X \tRSSI: -%i \t Packets (valid/invalid): %i/%i\r\n",
+        snprintf(buf, 256, "RSP ch. %i. Sensor: %X \tRSSI: %i INDEX %i %i %i\r\n",
           report.event.params.nrf_scan_req_report_event.channel,
           report.event.params.nrf_scan_req_report_event.address[0],
           report.event.params.nrf_scan_req_report_event.rssi,
-          report.valid_packets,
-          report.invalid_packets);
+					report.event.params.nrf_scan_req_report_event.address[1],
+					report.event.params.nrf_scan_req_report_event.address[2],
+					report.event.params.nrf_scan_req_report_event.address[3]);
         uart_putstring((uint8_t*) buf);
         break;
       
