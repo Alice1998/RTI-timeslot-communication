@@ -73,8 +73,8 @@ static nrf_radio_request_t m_timeslot_req_normal = {
   .params.normal = {
     NRF_RADIO_HFCLK_CFG_DEFAULT,
     NRF_RADIO_PRIORITY_NORMAL,
-    2500**ALL_SENSOR_COUNT,
-		2500**ALL_SENSOR_COUNT,
+    2500*ALL_SENSOR_COUNT,
+		2500*ALL_SENSOR_COUNT,
   }
 };
 

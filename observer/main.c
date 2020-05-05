@@ -233,19 +233,20 @@ int main(void)
 							report.valid_packets,
 							report.invalid_packets);
           else if(report.event.params.le_advertising_report_event.report_data[0]==0x44)
-						__LOG("[RSP] Sensor: %i, INFO: %i %i %i. RSSI: %i",
+						__LOG("[RSP] Sensor: %i. RSSI: %i",
 							report.event.params.le_advertising_report_event.address[0],
-              report.event.params.le_advertising_report_event.report_data[1],
-              report.event.params.le_advertising_report_event.report_data[2],
-              report.event.params.le_advertising_report_event.report_data[3],
 							report.event.params.le_advertising_report_event.rssi);
 					else if(report.event.params.le_advertising_report_event.report_data[0]==0x00)
           {
-            	__LOG("Count: %i %i. Matrix:",
+            	__LOG("Count: %i %i %i %i %i. Matrix: [0]%i %i %i %i %i [1]%i %i %i %i %i [2]%i %i %i %i %i",
 							report.event.params.le_advertising_report_event.report_data[1],
-              report.event.params.le_advertising_report_event.report_data[2]);
-              for(int i=0;i<ALL_SENSOR_COUNT;i++)
-                __LOG("%i %i %i %i %i",rssi_data[i][0],rssi_data[i][1],rssi_data[i][2],rssi_data[i][3],rssi_data[i][4]);
+              report.event.params.le_advertising_report_event.report_data[2],
+							report.event.params.le_advertising_report_event.report_data[3],
+							report.event.params.le_advertising_report_event.report_data[4],
+							report.event.params.le_advertising_report_event.report_data[5],
+							rssi_data[0][0],rssi_data[0][1],rssi_data[0][2],rssi_data[0][3],rssi_data[0][4],
+							rssi_data[1][0],rssi_data[1][1],rssi_data[1][2],rssi_data[1][3],rssi_data[1][4],
+							rssi_data[2][0],rssi_data[2][1],rssi_data[2][2],rssi_data[2][3],rssi_data[2][4]);
           }
 							break;
 							
