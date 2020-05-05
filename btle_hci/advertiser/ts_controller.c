@@ -273,10 +273,12 @@ int8_t get_packet_index(uint8_t * const pkt)
 
 static void deal_sensor_rsp_pkt(int8_t index)
 {
-	/* prepare scan rsp report */
+	periph_radio_rssi_read(&ble_scan_rsp_data[2+index]);
+/*
+	// prepare scan rsp report
 	nrf_report_t sensor_rsp_report;
 	
-	/* packet counters */
+	// packet counters
 	sensor_rsp_report.valid_packets = packet_count_valid;
 	sensor_rsp_report.invalid_packets = packet_count_invalid;
 	 
@@ -291,14 +293,15 @@ static void deal_sensor_rsp_pkt(int8_t index)
 	periph_radio_channel_get(&(sensor_rsp_report.event.params.nrf_scan_req_report_event.channel));
 
 	ble_scan_rsp_data[2+index]=sensor_rsp_report.event.params.nrf_scan_req_report_event.rssi;
+	
 
 	sensor_rsp_report.event.params.nrf_scan_req_report_event.address[1]=index;
 	sensor_rsp_report.event.params.nrf_scan_req_report_event.address[2]=UNIQUE_INDEX;
 	sensor_rsp_report.event.params.nrf_scan_req_report_event.address[3]=ble_scan_rsp_data[2+index];
 
-	/* send scan req event to user space */
+	// send scan req event to user space
 	nrf_report_disp_dispatch(&sensor_rsp_report);
-
+*/
 }
 #endif
 

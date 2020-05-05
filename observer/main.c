@@ -240,10 +240,13 @@ int main(void)
               report.event.params.le_advertising_report_event.report_data[3],
 							report.event.params.le_advertising_report_event.rssi);
 					else if(report.event.params.le_advertising_report_event.report_data[0]==0x00)
-						__LOG("Count: %i %i. Matrix: %i %i %i %i",
+          {
+            	__LOG("Count: %i %i. Matrix:",
 							report.event.params.le_advertising_report_event.report_data[1],
-              report.event.params.le_advertising_report_event.report_data[2],
-					rssi_data[0][0],rssi_data[0][1],rssi_data[1][0],rssi_data[1][1]);
+              report.event.params.le_advertising_report_event.report_data[2]);
+              for(int i=0;i<ALL_SENSOR_COUNT;i++)
+                __LOG("%i %i %i %i %i",rssi_data[i][0],rssi_data[i][1],rssi_data[i][2],rssi_data[i][3],rssi_data[i][4]);
+          }
 							break;
 							
 							//RSSI Data current debug
