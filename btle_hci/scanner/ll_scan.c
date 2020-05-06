@@ -214,13 +214,13 @@ static void m_adv_report_generate(uint8_t * const pkt)
   if(pkt[0]==MY_RSP_PACKET_POS0_POS2[0])
   {
    adv_report->length_data=ALL_SENSOR_COUNT-1;
-   memcpy(&(adv_report->report_data[1]), &pkt[3], ALL_SENSOR_COUNT-1);
+   memcpy(&(adv_report->report_data[1]), &pkt[4], ALL_SENSOR_COUNT-1);
   }
 
   report.valid_packets = m_packets_valid;
   report.invalid_packets = m_packets_invalid;
   memset(adv_report->address,0,6);
-  adv_report->address[0]=pkt[2];
+  adv_report->address[0]=pkt[3];
   
 
   #define BIT_6                               0x40 /**< The value of bit 6 */
@@ -396,7 +396,7 @@ static void m_state_receive_scan_rsp_exit (void)
 
 int8_t get_packet_index(uint8_t * const pkt)
 {
-  return pkt[2];
+  return pkt[3];
 }
 
 
@@ -464,17 +464,17 @@ void ll_scan_rx_cb (bool crc_valid)
       {
         m_state_receive_adv_exit();
         //m_adv_report_generate (m_rx_buf);
-        if(memcmp((void *)MY_RSP_PACKET_POS0_POS2,(void *)m_rx_buf,2)==0)
+        if(memcmp((void *)MY_RSP_PACKET_POS0_POS2,(void *)m_rx_buf,3)==0)
 				{
 					//data_report_generate(m_rx_buf[2],"---receive_rsp---",sizeof("---receive_rsp---"));
-					uint8_t index=m_rx_buf[2]-1;
+					uint8_t index=get_packet_index(m_rx_buf)-1;
 					sensor_packet_count[index]++;
-					memcpy(rssi_matrix_data[index],&m_rx_buf[3],ALL_SENSOR_COUNT);
+					memcpy(rssi_matrix_data[index],&m_rx_buf[4],ALL_SENSOR_COUNT);
 					m_adv_report_generate(m_rx_buf);	
 				}
         m_state_receive_adv_entry ();
       }
-      else if(memcmp((void *)MY_RSP_PACKET_POS0_POS2,(void *)m_rx_buf,2)==0)
+      else if(memcmp((void *)MY_RSP_PACKET_POS0_POS2,(void *)m_rx_buf,3)==0)
       {
         //m_adv_report_generate (m_rx_buf);
 				// central reset while sensor does not reset.
@@ -511,7 +511,7 @@ void ll_scan_rx_cb (bool crc_valid)
 					// this is the type for sensor adv
         case PACKET_TYPE_ADV_SCAN_IND:
           //if (m_rx_buf[0]==MY_ADV_PACKET_POS0_POS2[0]&&(m_rx_buf[1]+m_rx_buf[2]==MY_ADV_PACKET_POS0_POS2[1]))
-				 if(memcmp((void *)MY_ADV_PACKET_POS0_POS2,(void *)m_rx_buf,2)==0)
+				 if(memcmp((void *)MY_ADV_PACKET_POS0_POS2,(void *)m_rx_buf,3)==0)
           {
             index=get_packet_index(m_rx_buf);
 						//data_report_generate(index,"test",sizeof("test"));
@@ -551,7 +551,7 @@ void ll_scan_rx_cb (bool crc_valid)
       m_packets_valid++;
 
       m_state_receive_scan_rsp_exit ();
-			if(memcmp((void *)MY_RSP_PACKET_POS0_POS2,(void *)m_rx_buf,2)==0)
+			if(memcmp((void *)MY_RSP_PACKET_POS0_POS2,(void *)m_rx_buf,3)==0)
 				m_adv_report_generate (m_rx_buf);
       //m_state_receive_adv_entry ();
       m_state_receive_scan_rsp_entry();

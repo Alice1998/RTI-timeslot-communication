@@ -115,8 +115,8 @@ static uint8_t pool_index = 0;
 
 static uint8_t TEST_REQ[]={0xc3,0x0c,0x0};
 static uint8_t TEST_RSP[]={0x44,0x1F,0x0};
-static uint8_t adv_data_local[]={0x46,0x20,0x00};
-static uint8_t ble_scan_rsp_data[34];
+static uint8_t adv_data_local[]={0x46,0x20,0x00,0x0};
+static uint8_t ble_scan_rsp_data[35]; //3 1 31
 
 
 /*****************************************************************************
@@ -205,7 +205,7 @@ static __INLINE void scan_req_evt_dispatch(void)
 	scan_req_report.event.opcode			= BTLE_CMD_NONE;
 	
 	//scan_addr_get(&scan_req_report.event.params.nrf_scan_req_report_event.address_type, scan_req_report.event.params.nrf_scan_req_report_event.address);
-	scan_req_report.event.params.nrf_scan_req_report_event.address[0]=ble_rx_buf[2];
+	scan_req_report.event.params.nrf_scan_req_report_event.address[0]=ble_rx_buf[3];
 	
 	
 	periph_radio_rssi_read(&(scan_req_report.event.params.nrf_scan_req_report_event.rssi));
@@ -252,7 +252,7 @@ static uint8_t is_central_req_sensor_rsq(void)
 		++packet_count_valid;
 		return 1;
 	}
-	if(memcmp((void *)ble_rx_buf,(void *)TEST_RSP,2)==0)
+	if(memcmp((void *)ble_rx_buf,(void *)TEST_RSP,3)==0)
 	{
 		++packet_count_valid;
 		return 2;
@@ -266,14 +266,14 @@ static uint8_t is_central_req_sensor_rsq(void)
 
 int8_t get_packet_index(uint8_t * const pkt)
 {
-	return pkt[2];
+	return pkt[3];
 }
 
 
 
 static void deal_sensor_rsp_pkt(int8_t index)
 {
-	periph_radio_rssi_read(&ble_scan_rsp_data[2+index]);
+	periph_radio_rssi_read(&ble_scan_rsp_data[3+index]);
 /*
 	// prepare scan rsp report
 	nrf_report_t sensor_rsp_report;
@@ -511,13 +511,11 @@ void ctrl_init(void)
 	/* set the contents of advertisement and scan response to something
 	that is in line with BLE spec */
 
-	adv_data_local[2]  = UNIQUE_INDEX;
+	adv_data_local[3]  = UNIQUE_INDEX;
 #if TS_SEND_SCAN_RSP	
-	memset(&ble_scan_rsp_data[0], 0, 34);
-	/* set message type to SCAN_RSP, RANDOM in type byte of scan rsp data */
-	ble_scan_rsp_data[0] = TEST_RSP[0];
-	ble_scan_rsp_data[1]=TEST_RSP[1];
-	ble_scan_rsp_data[2] 	= UNIQUE_INDEX;
+	memset(&ble_scan_rsp_data[0], 0, 35);
+	memcpy(ble_scan_rsp_data,TEST_RSP,3);
+	ble_scan_rsp_data[3] 	= UNIQUE_INDEX;
 #else
 	/* set message type to ADV_IND_NONCONN, RANDOM in type byte of adv data */
 	
