@@ -479,6 +479,7 @@ static void send_rsp_packet(void)
 	// to be tested
 	periph_radio_tifs_set(150);
 	//scan_req_evt_dispatch();
+	memset(&ble_scan_rsp_data[4],0,sizeof(uint8_t)*31);
 #endif
 }
 
@@ -541,9 +542,10 @@ __INLINE void ctrl_signal_handler(uint8_t sig)
 				sm_enter_adv_send();
 			else
 			{
+				if(REQ_TIMESLOT_COUNT==UNIQUE_INDEX)
+					send_rsp_packet();
 				REQ_TIMESLOT_COUNT+=1;
 				//generate_report(REQ_TIMESLOT_COUNT,NULL);
-				send_rsp_packet();
 				//sm_enter_scan_req_rsp();
 			}
 			//periph_timer_start(0, (uint16_t)g_timeslot_req_earliest.params.normal.distance_us, true);
@@ -583,7 +585,7 @@ __INLINE void ctrl_signal_handler(uint8_t sig)
 						{
 							scan_req_evt_dispatch();
 							deal_sync_packet();
-							send_rsp_packet();
+							//send_rsp_packet();
 						}
 						// sensor rsp
 						else if(for_me==2)
