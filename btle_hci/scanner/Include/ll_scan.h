@@ -40,7 +40,7 @@
 #include <stdbool.h>
 
 // add
-#define ALL_SENSOR_COUNT 4
+#define ALL_SENSOR_COUNT 2
 bool all_sensor_started(void);
 void send_req_for_sync(void);
 

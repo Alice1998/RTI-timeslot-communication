@@ -154,6 +154,10 @@ void clear_rssi_matrix()
 {
   clear_rssi_data();
 }
+uint8_t get_sensor_count()
+{
+  return ALL_SENSOR_COUNT;
+}
 btle_status_codes_t btle_scan_init (IRQn_Type irq)
 {
   uint32_t err_code = NRF_SUCCESS;

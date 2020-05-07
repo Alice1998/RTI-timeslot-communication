@@ -59,6 +59,7 @@ btle_status_codes_t btle_scan_enable_set (btle_cmd_param_le_write_scan_enable_t 
 
 uint8_t** read_rssi_matrix();
 void clear_rssi_matrix();
+uint8_t get_sensor_count();
 
 
 #endif /* __SCANNER_H__ */

@@ -207,22 +207,21 @@ int main(void)
   btle_err_code = btle_scan_enable_set (scan_enable);
   ASSERT (btle_err_code == BTLE_STATUS_CODE_SUCCESS);
   __LOG ("Scanner enabled");
-
+	
+  nrf_adv_conn_init ();
+	
+	uint8_t ** rssi_data=read_rssi_matrix();
+  uint8_t sensor_count=get_sensor_count();
   char log_out_msg[1024];
   char tmp_buff[31];
-  strcpy(log_out_msg,"test log_out");
   memset(log_out_msg, 0, sizeof(log_out_msg));
+  strcpy(log_out_msg,"test log_out");
   for(int i=0;i<10;i++)
   {
     sprintf(tmp_buff, "[%d]\r\n", i);
     strcat(log_out_msg,tmp_buff);
   }
 	__LOG("%s",log_out_msg);
-	
-
-  nrf_adv_conn_init ();
-	
-	uint8_t ** rssi_data=read_rssi_matrix();
 
   while (true)
   {
@@ -246,6 +245,26 @@ int main(void)
 							report.event.params.le_advertising_report_event.rssi);
 					else if(report.event.params.le_advertising_report_event.report_data[0]==0x00)
           {
+              memset(log_out_msg, 0, sizeof(log_out_msg));
+              strcpy(log_out_msg,"COUNT");
+              for(int i=0;i<sensor_count;i++)
+              {
+                sprintf(tmp_buff, " %d",report.event.params.le_advertising_report_event.report_data[1+i]);
+                strcat(log_out_msg,tmp_buff);
+              }
+              strcat(log_out_msg,"\r\n");
+              for(int i=0;i<sensor_count;i++)
+              {
+                sprintf(tmp_buff,"[%d]",j);
+                strcat(log_out_msg,tmp_buff);
+                for(int j=0;j<sensor_count;j++)
+                {
+                  sprintf(tmp_buff," %d",rssi_data[i][j]);
+                  strcat(log_out_msg,tmp_buff);
+                }
+              }
+              __LOG("%s",log_out_msg);
+              /*
             	__LOG("Count: %i %i %i %i %i. Matrix: [0]%i %i %i %i %i [1]%i %i %i %i %i [2]%i %i %i %i %i",
 							report.event.params.le_advertising_report_event.report_data[1],
               report.event.params.le_advertising_report_event.report_data[2],
@@ -255,6 +274,7 @@ int main(void)
 							rssi_data[0][0],rssi_data[0][1],rssi_data[0][2],rssi_data[0][3],rssi_data[0][4],
 							rssi_data[1][0],rssi_data[1][1],rssi_data[1][2],rssi_data[1][3],rssi_data[1][4],
 							rssi_data[2][0],rssi_data[2][1],rssi_data[2][2],rssi_data[2][3],rssi_data[2][4]);
+              */
               clear_rssi_matrix();
           }
 							break;
