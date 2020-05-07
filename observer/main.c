@@ -207,6 +207,16 @@ int main(void)
   btle_err_code = btle_scan_enable_set (scan_enable);
   ASSERT (btle_err_code == BTLE_STATUS_CODE_SUCCESS);
   __LOG ("Scanner enabled");
+
+  char log_out_msg[1024];
+  char tmp_buff[31];
+  strcpy(log_out_msg,"test log_out");
+  memset(log_out_msg, 0, sizeof(log_out_msg));
+  for(int i=0;i<10;i++)
+  {
+    sprintf(tmp_buff, " [%d]", i);
+    strcat(log_out_msg,tmp_buff);
+  }
 	
 	char start_msg[31];
 	sprintf(&start_msg[0], "R:%X A:%X E:%X D:%X", NRF_RADIO->EVENTS_READY,NRF_RADIO->EVENTS_ADDRESS,NRF_RADIO->EVENTS_END,NRF_RADIO->EVENTS_DISABLED);
@@ -247,6 +257,7 @@ int main(void)
 							rssi_data[0][0],rssi_data[0][1],rssi_data[0][2],rssi_data[0][3],rssi_data[0][4],
 							rssi_data[1][0],rssi_data[1][1],rssi_data[1][2],rssi_data[1][3],rssi_data[1][4],
 							rssi_data[2][0],rssi_data[2][1],rssi_data[2][2],rssi_data[2][3],rssi_data[2][4]);
+              clear_rssi_matrix();
           }
 							break;
 							

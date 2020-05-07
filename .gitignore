@@ -7,3 +7,4 @@
 **/*.dep
 **/JLinkLog.*
 **/JLinkSettings.*
+**/.vscode

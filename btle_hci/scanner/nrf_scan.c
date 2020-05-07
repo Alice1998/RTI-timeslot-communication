@@ -150,6 +150,10 @@ uint8_t** read_rssi_matrix()
 {
 	return get_rssi_data();
 }
+void clear_rssi_matrix()
+{
+  clear_rssi_data();
+}
 btle_status_codes_t btle_scan_init (IRQn_Type irq)
 {
   uint32_t err_code = NRF_SUCCESS;

@@ -46,6 +46,7 @@ void send_req_for_sync(void);
 
 void init_rssi_matrix();
 uint8_t** get_rssi_data();
+void clear_rssi_data();
 
 int8_t get_packet_index(uint8_t * const pkt);
 void data_report_generate(uint8_t flag,char * const pkt,uint8_t pkt_size);
