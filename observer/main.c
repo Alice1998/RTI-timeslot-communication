@@ -253,11 +253,11 @@ int main(void)
                 strcat(log_out_msg,tmp_buff);
               }
               strcat(log_out_msg,"\r\n");
-              for(int i=0;i<sensor_count;i++)
+              for(int i=0;i<sensor_count-1;i++)
               {
                 sprintf(tmp_buff,"[%d]",i);
                 strcat(log_out_msg,tmp_buff);
-                for(int j=i+1;j<sensor_count-1;j++)
+                for(int j=i+1;j<sensor_count;j++)
                 {
                   sprintf(tmp_buff," %d",rssi_data[i][j]);
                   strcat(log_out_msg,tmp_buff);

@@ -256,8 +256,8 @@ static void matrix_data_dispatch()
   adv_report->length_data=ALL_SENSOR_COUNT-1;
   memcpy(&(adv_report->report_data[1]), sensor_packet_count, ALL_SENSOR_COUNT);
 
-  for(int i=0;i<ALL_SENSOR_COUNT;i++)
-    for(int j=i+1;j<ALL_SENSOR_COUNT-1;j++)
+  for(int i=0;i<ALL_SENSOR_COUNT-1;i++)
+    for(int j=i+1;j<ALL_SENSOR_COUNT;j++)
     {
       if(rssi_matrix_data[i][j]==0||rssi_matrix_data[j][i]==0)
       {

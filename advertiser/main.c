@@ -382,13 +382,10 @@ void SWI0_IRQHandler(void)
     switch (report.event.event_code)
     {
       case BTLE_VS_EVENT_NRF_LL_EVENT_SCAN_REQ_REPORT:
-        snprintf(buf, 256, "RSP ch. %i. Sensor: %X \tRSSI: %i INDEX %i %i %i\r\n",
+        snprintf(buf, 256, "RSP ch. %i. Sensor: %X \tRSSI: %i\r\n",
           report.event.params.nrf_scan_req_report_event.channel,
           report.event.params.nrf_scan_req_report_event.address[0],
-          report.event.params.nrf_scan_req_report_event.rssi,
-					report.event.params.nrf_scan_req_report_event.address[1],
-					report.event.params.nrf_scan_req_report_event.address[2],
-					report.event.params.nrf_scan_req_report_event.address[3]);
+          report.event.params.nrf_scan_req_report_event.rssi);
         uart_putstring((uint8_t*) buf);
         break;
       
@@ -397,7 +394,7 @@ void SWI0_IRQHandler(void)
         if (report.event.params.le_advertising_report_event.report_data[0]==0x50)
 				{
 					//if(report.event.params.le_advertising_report_event.report_data[1]==0xc3)
-						snprintf(buf,256,"general report: %X %X %X %X %X %X : %X %X %X %X - %X %X %X %X %X \r\n",
+						snprintf(buf,256,"[D]: %X %X %X %X %X %X : %X %X %X %X - %X %X %X %X %X \r\n",
           report.event.params.le_advertising_report_event.report_data[1],
           report.event.params.le_advertising_report_event.report_data[2],
           report.event.params.le_advertising_report_event.report_data[3],
@@ -415,7 +412,7 @@ void SWI0_IRQHandler(void)
           report.event.params.le_advertising_report_event.report_data[15]);
 				}
 				else
-		    	snprintf(buf,256,"general report: %X \r\n",report.event.params.le_advertising_report_event.report_data[0]);
+		    	snprintf(buf,256,"[R]: %X \r\n",report.event.params.le_advertising_report_event.report_data[0]);
         uart_putstring((uint8_t*) buf);
         break;
       /* For now, the only event we care about is the scan req event. */
