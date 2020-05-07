@@ -181,7 +181,7 @@ uint8_t** get_rssi_data()
 void clear_rssi_data()
 {
 	for(int i=0;i<ALL_SENSOR_COUNT;i++)
-  memset(rssi_matrix_data[i],0,sizeof(uint8_t)*ALL_SENSOR_COUNT)
+		memset(rssi_matrix_data[i],0,sizeof(uint8_t)*ALL_SENSOR_COUNT);
 }
 	
 

@@ -214,13 +214,11 @@ int main(void)
   memset(log_out_msg, 0, sizeof(log_out_msg));
   for(int i=0;i<10;i++)
   {
-    sprintf(tmp_buff, " [%d]", i);
+    sprintf(tmp_buff, "[%d]\r\n", i);
     strcat(log_out_msg,tmp_buff);
   }
+	__LOG("%s",log_out_msg);
 	
-	char start_msg[31];
-	sprintf(&start_msg[0], "R:%X A:%X E:%X D:%X", NRF_RADIO->EVENTS_READY,NRF_RADIO->EVENTS_ADDRESS,NRF_RADIO->EVENTS_END,NRF_RADIO->EVENTS_DISABLED);
-  __LOG(start_msg);
 
   nrf_adv_conn_init ();
 	
