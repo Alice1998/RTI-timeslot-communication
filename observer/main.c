@@ -255,26 +255,16 @@ int main(void)
               strcat(log_out_msg,"\r\n");
               for(int i=0;i<sensor_count;i++)
               {
-                sprintf(tmp_buff,"[%d]",j);
+                sprintf(tmp_buff,"[%d]",i);
                 strcat(log_out_msg,tmp_buff);
                 for(int j=0;j<sensor_count;j++)
                 {
                   sprintf(tmp_buff," %d",rssi_data[i][j]);
                   strcat(log_out_msg,tmp_buff);
                 }
+								strcat(log_out_msg,"\r\n");
               }
               __LOG("%s",log_out_msg);
-              /*
-            	__LOG("Count: %i %i %i %i %i. Matrix: [0]%i %i %i %i %i [1]%i %i %i %i %i [2]%i %i %i %i %i",
-							report.event.params.le_advertising_report_event.report_data[1],
-              report.event.params.le_advertising_report_event.report_data[2],
-							report.event.params.le_advertising_report_event.report_data[3],
-							report.event.params.le_advertising_report_event.report_data[4],
-							report.event.params.le_advertising_report_event.report_data[5],
-							rssi_data[0][0],rssi_data[0][1],rssi_data[0][2],rssi_data[0][3],rssi_data[0][4],
-							rssi_data[1][0],rssi_data[1][1],rssi_data[1][2],rssi_data[1][3],rssi_data[1][4],
-							rssi_data[2][0],rssi_data[2][1],rssi_data[2][2],rssi_data[2][3],rssi_data[2][4]);
-              */
               clear_rssi_matrix();
           }
 							break;
