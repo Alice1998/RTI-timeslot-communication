@@ -127,6 +127,7 @@ static uint8_t m_tx_buf[] =
   0xC3,                               // BLE Header (PDU_TYPE: SCAN_REQ, TXadd: 1 (random address), RXadd: 1 (random address)
   0x0C,                               // Length of payload: 12
   0x00,                               // Padding bits for S1 (REF: the  nRF51 reference manual 16.1.2)
+  ALL_SENSOR_COUNT,
 };
 
 

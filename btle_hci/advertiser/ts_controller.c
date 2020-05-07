@@ -117,6 +117,7 @@ static uint8_t TEST_REQ[]={0xc3,0x0c,0x0};
 static uint8_t TEST_RSP[]={0x44,0x1F,0x0};
 static uint8_t adv_data_local[]={0x46,0x20,0x00,0x0};
 static uint8_t ble_scan_rsp_data[35]; //3 1 31
+uint8_t ALL_SENSOR_COUNT=8;
 
 
 /*****************************************************************************
@@ -249,6 +250,7 @@ static uint8_t is_central_req_sensor_rsq(void)
 	}
 	if(memcmp((void *)ble_rx_buf,(void *)TEST_REQ,3)==0)
 	{
+		ALL_SENSOR_COUNT=ble_rx_buf[3];
 		++packet_count_valid;
 		return 1;
 	}
@@ -540,7 +542,7 @@ __INLINE void ctrl_signal_handler(uint8_t sig)
 					send_rsp_packet();
 				else
 					sm_enter_scan_req_rsp();
-				if(REQ_TIMESLOT_COUNT>=2)
+				if(REQ_TIMESLOT_COUNT>=ALL_SENSOR_COUNT)
 					REQ_TIMESLOT_COUNT=0;
 				REQ_TIMESLOT_COUNT+=1;
 				//generate_report(REQ_TIMESLOT_COUNT,NULL);
@@ -581,7 +583,7 @@ __INLINE void ctrl_signal_handler(uint8_t sig)
 						// central sync packet
 						if(for_me==1)
 						{
-							scan_req_evt_dispatch();
+							//scan_req_evt_dispatch();
 							deal_sync_packet();
 							//send_rsp_packet();
 						}
