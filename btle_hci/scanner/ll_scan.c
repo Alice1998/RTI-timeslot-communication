@@ -255,6 +255,23 @@ static void matrix_data_dispatch()
   adv_report->report_data[0]=0x0;
   adv_report->length_data=ALL_SENSOR_COUNT-1;
   memcpy(&(adv_report->report_data[1]), sensor_packet_count, ALL_SENSOR_COUNT);
+
+  for(int i=0;i<ALL_SENSOR_COUNT)
+    for(int j=i+1;j<ALL_SENSOR_COUNT)
+    {
+      int tmp_i=ALL_SENSOR_COUNT-1-i;
+      int tmp_j=ALL_SENSOR_COUNT-1-j;
+      if(rssi_matrix_data[i][j]==0||rssi_matrix_data[tmp_i][tmp_j]==0)
+      {
+        rssi_matrix_data[i][j]+=rssi_matrix_data[tmp_i][tmp_j];
+        rssi_matrix_data[tmp_i][tmp_j]=rssi_matrix_data[i][j];
+      }
+      else
+      {
+        rssi_matrix_data[i][j]=(rssi_matrix_data[i][j]+rssi_matrix_data[tmp_i][tmp_j])/2;
+        rssi_matrix_data[tmp_i][tmp_j]=rssi_matrix_data[i][j];
+      }
+    }
   
 
   report.valid_packets = m_packets_valid;
