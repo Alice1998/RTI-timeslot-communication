@@ -257,7 +257,7 @@ int main(void)
               {
                 sprintf(tmp_buff,"[%d]",i);
                 strcat(log_out_msg,tmp_buff);
-                for(int j=0;j<sensor_count;j++)
+                for(int j=i+1;j<sensor_count-1;j++)
                 {
                   sprintf(tmp_buff," %d",rssi_data[i][j]);
                   strcat(log_out_msg,tmp_buff);

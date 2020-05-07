@@ -288,8 +288,8 @@ void radio_event_cb (void)
   //char start_msg[31];
   //sprintf(start_msg, "ER:%X EA:%X EE:%X ED:%X", NRF_RADIO->EVENTS_READY,NRF_RADIO->EVENTS_ADDRESS,NRF_RADIO->EVENTS_END,NRF_RADIO->EVENTS_DISABLED);
   //data_report_generate(m_radio_dir,start_msg,31);
-	if (m_radio_dir==RADIO_DIR_TX)
-		data_report_generate(NRF_RADIO->EVENTS_DISABLED,"CENTRAL_REQ_SENT",sizeof("CENTRAL_REQ_SENT"));
+	//if (m_radio_dir==RADIO_DIR_TX)
+	//	data_report_generate(NRF_RADIO->EVENTS_DISABLED,"CENTRAL_REQ_SENT",sizeof("CENTRAL_REQ_SENT"));
 
 	if (NRF_RADIO->EVENTS_DISABLED != 0)
   {

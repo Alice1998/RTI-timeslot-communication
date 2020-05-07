@@ -581,7 +581,7 @@ __INLINE void ctrl_signal_handler(uint8_t sig)
 						// central sync packet
 						if(for_me==1)
 						{
-							//scan_req_evt_dispatch();
+							scan_req_evt_dispatch();
 							deal_sync_packet();
 							send_rsp_packet();
 						}
