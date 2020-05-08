@@ -64,7 +64,7 @@ static nrf_radio_request_t m_timeslot_req_earliest = {
   .params.earliest = {
     NRF_RADIO_HFCLK_CFG_DEFAULT,
     NRF_RADIO_PRIORITY_NORMAL,
-    2500*ALL_SENSOR_COUNT,
+    2500*ALL_SENSOR_COUNT+500,
     TIMESLOT_TIMEOUT_US
   }
 };
@@ -73,8 +73,8 @@ static nrf_radio_request_t m_timeslot_req_normal = {
   .params.normal = {
     NRF_RADIO_HFCLK_CFG_DEFAULT,
     NRF_RADIO_PRIORITY_NORMAL,
-    2500*ALL_SENSOR_COUNT,
-		2500*ALL_SENSOR_COUNT,
+    2500*ALL_SENSOR_COUNT+500,
+		2500*ALL_SENSOR_COUNT+500,
   }
 };
 
@@ -91,7 +91,7 @@ nrf_radio_signal_callback_return_param_t *radio_cb (uint8_t sig)
       NRF_TIMER0->TASKS_CLEAR = 1;
       NRF_TIMER0->EVENTS_COMPARE[0] = 0;
       NRF_TIMER0->INTENSET = TIMER_INTENSET_COMPARE0_Msk;
-      NRF_TIMER0->CC[0] = m_timeslot_req_normal.params.normal.length_us - 500;  
+      NRF_TIMER0->CC[0] = m_timeslot_req_normal.params.normal.length_us - 500*ALL_SENSOR_COUNT;  
 
 			ll_scan_start ();
 

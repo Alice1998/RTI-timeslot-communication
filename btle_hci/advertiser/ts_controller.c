@@ -442,7 +442,14 @@ static void sm_enter_wait_for_idle(bool req_rx_accepted)
 
 static void deal_sync_packet(void)
 {
-	//generate_report(0x30,NULL);
+	/*
+	if(NRF_TIMER0->EVENTS_COMPARE[0]!=0)
+	{
+		periph_timer_abort(0);
+		periph_timer_start(0,500,true);
+	}
+	*/
+	
 	START_FLAG=1;
 	REQ_TIMESLOT_COUNT=1;
 #if TS_SEND_SCAN_RSP		
@@ -538,6 +545,7 @@ __INLINE void ctrl_signal_handler(uint8_t sig)
 				sm_enter_adv_send();
 			else
 			{
+				//generate_report(REQ_TIMESLOT_COUNT,NULL);
 				if(REQ_TIMESLOT_COUNT==UNIQUE_INDEX)
 					send_rsp_packet();
 				else
@@ -591,7 +599,7 @@ __INLINE void ctrl_signal_handler(uint8_t sig)
 						else if(for_me==2)
 						{
 							//generate_report(0x32,NULL);
-							//scan_req_evt_dispatch();
+							scan_req_evt_dispatch();
 							int8_t rsp_sensor_index=get_packet_index(ble_rx_buf);
 							//generate_report(0x55+rsp_sensor_index,NULL);
 							// other sensor rsp packet
