@@ -233,7 +233,7 @@ int main(void)
 							report.valid_packets,
 							report.invalid_packets);
           else if(report.event.params.le_advertising_report_event.report_data[0]==0x44)
-						__LOG("[RSP] Sensor: %i. RSSI: %i",
+						__LOG("Sensor: %i. RSSI: %i",
 							report.event.params.le_advertising_report_event.address[0],
 							report.event.params.le_advertising_report_event.rssi);
 					else if(report.event.params.le_advertising_report_event.report_data[0]==0x00)
@@ -250,7 +250,7 @@ int main(void)
               {
                 sprintf(tmp_buff,"[%d]",i);
                 strcat(log_out_msg,tmp_buff);
-                for(int j=i+1;j<sensor_count;j++)
+                for(int j=0;j<sensor_count;j++)
                 {
                   sprintf(tmp_buff," %d",rssi_data[i][j]);
                   strcat(log_out_msg,tmp_buff);
@@ -408,7 +408,7 @@ static void initialize_uart(void)
     .cts_pin_no   = CTS_PIN_NUMBER,
     .flow_control = APP_UART_FLOW_CONTROL_DISABLED,
     .use_parity   = false,
-    .baud_rate    = UART_BAUDRATE_BAUDRATE_Baud115200
+    .baud_rate    = UART_BAUDRATE_BAUDRATE_Baud256000
   };
   APP_UART_FIFO_INIT(&uart_params,
                      UART_RX_BUF_SIZE,
