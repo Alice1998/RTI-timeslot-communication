@@ -80,8 +80,8 @@
   #define __LOG(F, ...) (void)__NOP()
 #endif
 
-#define TIMESLOT_LENGTH_US 10000
-#define TIMESLOT_DISTANCE_US 20000
+#define TIMESLOT_LENGTH_US 2500*4//10000
+#define TIMESLOT_DISTANCE_US 2500*4 //20000
 
 
 /*****************************************************************************
@@ -215,13 +215,6 @@ int main(void)
   char log_out_msg[1024];
   char tmp_buff[31];
   memset(log_out_msg, 0, sizeof(log_out_msg));
-  strcpy(log_out_msg,"test log_out");
-  for(int i=0;i<10;i++)
-  {
-    sprintf(tmp_buff, "[%d]\r\n", i);
-    strcat(log_out_msg,tmp_buff);
-  }
-	__LOG("%s",log_out_msg);
 
   while (true)
   {

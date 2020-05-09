@@ -346,9 +346,10 @@ static void m_state_receive_adv_entry (void)
 	if (m_scanner.state!=SCANNER_STATE_RECEIVE_ADV)
 		change_flag=0;
   m_scanner.state = SCANNER_STATE_RECEIVE_ADV;
+	/*
 	if(change_flag)
 		return;
-	/*
+	
 	if(sync_flag)
 		data_report_generate(m_scanner.state,"enter_rsp_scan",sizeof("enter_rsp_scan"));
 	else
@@ -434,6 +435,7 @@ void deal_sensor_adv(uint8_t index)
 
 bool all_sensor_started()
 {
+	//data_report_generate(sensor_adv_count,"online",sizeof("online"));
 	if (sensor_adv_count==ALL_SENSOR_COUNT)
 	{
     // sync_flag=1;
@@ -721,7 +723,8 @@ btle_status_codes_t ll_scan_config (btle_scan_types_t scan_type, btle_address_ty
 }
 
 btle_status_codes_t ll_scan_start (void)
-{ 
+{
+	
   /* Toggle pin when radio reaches END (RX or TX) */
   NRF_GPIOTE->CONFIG[DBG_RADIO_END] = GPIOTE_CONFIG_MODE_Task << GPIOTE_CONFIG_MODE_Pos |
                           GPIOTE_CONFIG_POLARITY_Toggle << GPIOTE_CONFIG_POLARITY_Pos |

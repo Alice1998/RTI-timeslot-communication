@@ -64,8 +64,8 @@ static nrf_radio_request_t m_timeslot_req_earliest = {
   .params.earliest = {
     NRF_RADIO_HFCLK_CFG_DEFAULT,
     NRF_RADIO_PRIORITY_NORMAL,
-    2500*ALL_SENSOR_COUNT+500,
-    TIMESLOT_TIMEOUT_US
+    2500*ALL_SENSOR_COUNT*2,
+    TIMESLOT_TIMEOUT_US,
   }
 };
 static nrf_radio_request_t m_timeslot_req_normal = {
@@ -73,8 +73,8 @@ static nrf_radio_request_t m_timeslot_req_normal = {
   .params.normal = {
     NRF_RADIO_HFCLK_CFG_DEFAULT,
     NRF_RADIO_PRIORITY_NORMAL,
-    2500*ALL_SENSOR_COUNT+500,
-		2500*ALL_SENSOR_COUNT+500,
+    2500*ALL_SENSOR_COUNT*2,
+		2500*ALL_SENSOR_COUNT*2,
   }
 };
 
@@ -91,7 +91,7 @@ nrf_radio_signal_callback_return_param_t *radio_cb (uint8_t sig)
       NRF_TIMER0->TASKS_CLEAR = 1;
       NRF_TIMER0->EVENTS_COMPARE[0] = 0;
       NRF_TIMER0->INTENSET = TIMER_INTENSET_COMPARE0_Msk;
-      NRF_TIMER0->CC[0] = m_timeslot_req_normal.params.normal.length_us - 500*ALL_SENSOR_COUNT;  
+      NRF_TIMER0->CC[0] = m_timeslot_req_normal.params.normal.length_us-600;  
 
 			ll_scan_start ();
 
@@ -192,9 +192,9 @@ btle_status_codes_t btle_scan_param_set (btle_cmd_param_le_write_scan_parameters
 {
   btle_status_codes_t status;
   
-  m_timeslot_req_earliest.params.earliest.length_us = param.scan_window;
-  m_timeslot_req_normal.params.normal.length_us = param.scan_window;
-  m_timeslot_req_normal.params.normal.distance_us = param.scan_interval;
+ // m_timeslot_req_earliest.params.earliest.length_us = param.scan_window;
+  //m_timeslot_req_normal.params.normal.length_us = param.scan_window;
+  //m_timeslot_req_normal.params.normal.distance_us = param.scan_interval;
   
   ll_scan_init(); // set the state of m_scanner
   status = ll_scan_config (param.scan_type, param.own_address_type, param.scanning_filter_policy);
