@@ -178,11 +178,11 @@ int main(void)
   /* Setup UART */
   initialize_uart();
 
-  __LOG("Program init", __FUNCTION__);
+  //__LOG("Program init", __FUNCTION__);
 
   err_code = sd_softdevice_enable ((uint32_t) NRF_CLOCK_LFCLKSRC_XTAL_75_PPM, sd_assert_cb);
   ASSERT (err_code == NRF_SUCCESS);
-  __LOG ("Softdevice enabled");
+  //__LOG ("Softdevice enabled");
 
   err_code = sd_nvic_EnableIRQ(SD_EVT_IRQn);
   ASSERT (err_code == NRF_SUCCESS);
@@ -193,20 +193,20 @@ int main(void)
   err_code = sd_nvic_EnableIRQ(SWI1_IRQn);
   ASSERT (err_code == NRF_SUCCESS);
 
-  __LOG ("Interrupts enabled");
+  //__LOG ("Interrupts enabled");
 
   btle_err_code = btle_scan_init (SWI1_IRQn);
   ASSERT (btle_err_code == BTLE_STATUS_CODE_SUCCESS);
-  __LOG ("Scanner initialized");
+  //__LOG ("Scanner initialized");
 
   btle_err_code = btle_scan_param_set (scan_param);
   ASSERT (btle_err_code == BTLE_STATUS_CODE_SUCCESS);
-  __LOG ("Scanner parameters set");
+  //__LOG ("Scanner parameters set");
 
   // a timeslot is requested here
   btle_err_code = btle_scan_enable_set (scan_enable);
   ASSERT (btle_err_code == BTLE_STATUS_CODE_SUCCESS);
-  __LOG ("Scanner enabled");
+  __LOG ("Scanner enabled\r\n");
 	
   nrf_adv_conn_init ();
 	
