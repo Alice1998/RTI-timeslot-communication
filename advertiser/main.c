@@ -261,7 +261,7 @@ static void uart_init(void)
     .cts_pin_no = CTS_PIN_NUMBER,
     .flow_control = APP_UART_FLOW_CONTROL_ENABLED,
     .use_parity = false,
-    .baud_rate = UART_BAUDRATE_BAUDRATE_Baud38400
+    .baud_rate = UART_BAUDRATE_BAUDRATE_Baud250000
   };
   APP_UART_FIFO_INIT(&uart_params, UART_RX_BUF_SIZE, UART_TX_BUF_SIZE, uart_event_handler, APP_IRQ_PRIORITY_LOW, status);
   APP_ERROR_CHECK(status);
@@ -307,7 +307,7 @@ int main(void)
   uart_init();
 
   char start_msg[128];
-  sprintf(&start_msg[0], "\n| %s |---------------------------------------------------\r\n\n", __TIME__);
+  sprintf(&start_msg[0], "%s |---------------------------------------------------\r\n", __TIME__);
   uart_putstring((uint8_t*) &start_msg[0]);
 	
 

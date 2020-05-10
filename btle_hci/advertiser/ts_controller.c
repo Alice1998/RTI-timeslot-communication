@@ -276,6 +276,7 @@ int8_t get_packet_index(uint8_t * const pkt)
 static void deal_sensor_rsp_pkt(int8_t index)
 {
 	periph_radio_rssi_read(&ble_scan_rsp_data[3+index]);
+	/*
 
 	// prepare scan rsp report
 	nrf_report_t sensor_rsp_report;
@@ -297,6 +298,7 @@ static void deal_sensor_rsp_pkt(int8_t index)
 
 	// send scan req event to user space
 	nrf_report_disp_dispatch(&sensor_rsp_report);
+	*/
 
 }
 #endif
@@ -615,7 +617,7 @@ __INLINE void ctrl_signal_handler(uint8_t sig)
 					break;
 #endif
 				case STATE_SEND_RSP:
-					//generate_report(0x51,NULL);
+					generate_report(0x51,NULL);
 					exit_send_rsp_state();
 					sm_enter_scan_req_rsp();
 					break;
