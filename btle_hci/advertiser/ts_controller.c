@@ -134,8 +134,8 @@ static nrf_radio_request_t g_timeslot_req_earliest =
 			.params.earliest = {
 						HFCLK, 
 						NRF_RADIO_PRIORITY_NORMAL, 
-						2000,		
-						2000}
+						2500,		
+						2500}
 			};
 
 /* timeslot request NORMAL. Used to request a periodic timeslot, i.e. advertisement events */
@@ -144,8 +144,8 @@ static nrf_radio_request_t g_timeslot_req_normal =
 			.params.normal = {
 						HFCLK, 
 						NRF_RADIO_PRIORITY_NORMAL, 
-						2000,	
-						2000}
+						2500,	
+						2500}
 			};
 
 
@@ -248,7 +248,7 @@ static uint8_t is_central_req_sensor_rsq(void)
 		++packet_count_invalid;
 		return -1;
 	}
-	if(memcmp((void *)ble_rx_buf,(void *)TEST_REQ,3)==0)
+	if(memcmp((void *)ble_rx_buf,(void *)TEST_REQ,3)==0&&ble_rx_buf[3]>0&&ble_rx_buf[3]<25)
 	{
 		ALL_SENSOR_COUNT=ble_rx_buf[3];
 		++packet_count_valid;
@@ -541,7 +541,7 @@ __INLINE void ctrl_signal_handler(uint8_t sig)
 	{
 		case NRF_RADIO_CALLBACK_SIGNAL_TYPE_START:	
 			DEBUG_PIN_POKE(3);
-			periph_timer_start(0,(uint16_t)g_timeslot_req_normal.params.normal.distance_us-300,true);		
+			periph_timer_start(0,(uint16_t)g_timeslot_req_normal.params.normal.distance_us-500,true);		
 			adv_evt_setup();
 			if(START_FLAG==0)
 				sm_enter_adv_send();
@@ -552,7 +552,7 @@ __INLINE void ctrl_signal_handler(uint8_t sig)
 					send_rsp_packet();
 				else
 					sm_enter_scan_req_rsp();
-				if(REQ_TIMESLOT_COUNT>ALL_SENSOR_COUNT)
+				if(REQ_TIMESLOT_COUNT>=ALL_SENSOR_COUNT)
 					REQ_TIMESLOT_COUNT=0;
 				REQ_TIMESLOT_COUNT+=1;
 				//generate_report(REQ_TIMESLOT_COUNT,NULL);
