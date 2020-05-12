@@ -233,23 +233,25 @@ int main(void)
 							report.valid_packets,
 							report.invalid_packets);
           else if(report.event.params.le_advertising_report_event.report_data[0]==0x44)
-						__LOG("Sensor: %i. RSSI: %i",
+						__LOG("%i %i",
 							report.event.params.le_advertising_report_event.address[0],
 							report.event.params.le_advertising_report_event.rssi);
 					else if(report.event.params.le_advertising_report_event.report_data[0]==0x00)
           {
               memset(log_out_msg, 0, sizeof(log_out_msg));
-              strcpy(log_out_msg,"COUNT");
+						/*
+              strcpy(log_out_msg,"C");
               for(int i=0;i<sensor_count;i++)
               {
                 sprintf(tmp_buff, " %d",report.event.params.le_advertising_report_event.report_data[1+i]);
                 strcat(log_out_msg,tmp_buff);
               }
               strcat(log_out_msg,"\r\n");
+						*/
               for(int i=0;i<sensor_count;i++)
               {
-                sprintf(tmp_buff,"[%d]",i);
-                strcat(log_out_msg,tmp_buff);
+                //sprintf(tmp_buff,"%d",i);
+                //strcat(log_out_msg,tmp_buff);
                 for(int j=0;j<sensor_count;j++)
                 {
                   sprintf(tmp_buff," %d",rssi_data[i][j]);
@@ -408,7 +410,7 @@ static void initialize_uart(void)
     .cts_pin_no   = CTS_PIN_NUMBER,
     .flow_control = APP_UART_FLOW_CONTROL_DISABLED,
     .use_parity   = false,
-    .baud_rate    = UART_BAUDRATE_BAUDRATE_Baud250000
+    .baud_rate    = UART_BAUDRATE_BAUDRATE_Baud1M
   };
   APP_UART_FIFO_INIT(&uart_params,
                      UART_RX_BUF_SIZE,

@@ -38,7 +38,7 @@ class SerialPort:
 
 
 serialPort = 'COM5'  # 串口 5
-baudRate = 250000  # 波特率 250000
+baudRate = 1000000  # 波特率 250000
 is_exit=False
 data_bytes=bytearray()
 
@@ -67,8 +67,8 @@ if __name__ == '__main__':
         if i<len(data_bytes) and data_bytes[i]==10:
             dt=datetime.now()
             nowtime_str=dt.strftime('%H-%M-%S.%f')
-            loc_str=[nowtime_str,data_bytes[:i-1]]
+            loc_str=[nowtime_str[3:-3],data_bytes[1:i-1]]
             csv_writer.writerow(loc_str)
-            print nowtime_str,data_bytes[:i-1]
+            print nowtime_str[3:-3],data_bytes[1:i-1]
             data_bytes[:i+1]=b''
             i=0

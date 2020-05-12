@@ -547,7 +547,7 @@ __INLINE void ctrl_signal_handler(uint8_t sig)
 				sm_enter_adv_send();
 			else
 			{
-				generate_report(REQ_TIMESLOT_COUNT,NULL);
+				//generate_report(REQ_TIMESLOT_COUNT,NULL);
 				if(REQ_TIMESLOT_COUNT==UNIQUE_INDEX)
 					send_rsp_packet();
 				else
@@ -594,7 +594,7 @@ __INLINE void ctrl_signal_handler(uint8_t sig)
 						if(for_me==1)
 						{
 							//scan_req_evt_dispatch();
-							generate_report(0x20,NULL);
+							//generate_report(0x20,NULL);
 							deal_sync_packet();
 							//send_rsp_packet();
 						}
@@ -602,7 +602,7 @@ __INLINE void ctrl_signal_handler(uint8_t sig)
 						else if(for_me==2)
 						{
 							//generate_report(0x32,NULL);
-							scan_req_evt_dispatch();
+							//scan_req_evt_dispatch();
 							int8_t rsp_sensor_index=get_packet_index(ble_rx_buf);
 							//generate_report(0x55+rsp_sensor_index,NULL);
 							// other sensor rsp packet
@@ -618,7 +618,7 @@ __INLINE void ctrl_signal_handler(uint8_t sig)
 					break;
 #endif
 				case STATE_SEND_RSP:
-					generate_report(0x50,NULL);
+					//generate_report(0x50,NULL);
 					exit_send_rsp_state();
 					sm_enter_scan_req_rsp();
 					break;
