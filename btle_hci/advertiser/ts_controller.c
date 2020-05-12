@@ -541,7 +541,7 @@ __INLINE void ctrl_signal_handler(uint8_t sig)
 	{
 		case NRF_RADIO_CALLBACK_SIGNAL_TYPE_START:	
 			DEBUG_PIN_POKE(3);
-			periph_timer_start(0,(uint16_t)g_timeslot_req_normal.params.normal.distance_us-300,true);		
+			periph_timer_start(0,(uint16_t)g_timeslot_req_normal.params.normal.distance_us-500,true);		
 			adv_evt_setup();
 			if(START_FLAG==0)
 				sm_enter_adv_send();
