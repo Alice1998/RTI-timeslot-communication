@@ -43,7 +43,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "nrf51_bitfields.h"
 
 // sensor index modified here
-#define UNIQUE_INDEX 2
+#define UNIQUE_INDEX 1
 
 
 #define HFCLK                   NRF_RADIO_HFCLK_CFG_FORCE_XTAL

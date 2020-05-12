@@ -37,7 +37,7 @@ class SerialPort:
                 #print str(datetime.now()),':',rec_str
 
 
-serialPort = 'COM4'  # 串口 5
+serialPort = 'COM6'  # 串口 5
 baudRate = 250000  # 波特率 250000
 is_exit=False
 data_bytes=bytearray()
@@ -47,7 +47,7 @@ if __name__ == '__main__':
     mSerial = SerialPort(serialPort, baudRate)
 
     #文件写入操作
-    filename="sensor2.csv"
+    filename="sensor1.csv"
     dt=datetime.now()
     nowtime_str=dt.strftime('%H-%M-%S.%f')  #时间
     filename='data/'+nowtime_str+'_'+filename

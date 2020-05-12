@@ -113,7 +113,7 @@ static uint8_t rng_pool[255];
 /* A pointer into our pool. Will wrap around upon overflow */
 static uint8_t pool_index = 0;
 
-static uint8_t TEST_REQ[]={0xc3,0x0c,0x0};
+static uint8_t TEST_REQ[]={0xc3,0x0c,0x1,0xa};
 static uint8_t TEST_RSP[]={0x44,0x1F,0x0};
 static uint8_t adv_data_local[]={0x46,0x20,0x00,0x0};
 static uint8_t ble_scan_rsp_data[35]; //3 1 31
@@ -248,9 +248,9 @@ static uint8_t is_central_req_sensor_rsq(void)
 		++packet_count_invalid;
 		return -1;
 	}
-	if(memcmp((void *)ble_rx_buf,(void *)TEST_REQ,3)==0&&ble_rx_buf[3]>0&&ble_rx_buf[3]<25)
+	if(memcmp((void *)ble_rx_buf,(void *)TEST_REQ,4)==0)
 	{
-		ALL_SENSOR_COUNT=ble_rx_buf[3];
+		ALL_SENSOR_COUNT=ble_rx_buf[4];
 		++packet_count_valid;
 		return 1;
 	}
