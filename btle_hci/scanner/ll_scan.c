@@ -591,7 +591,7 @@ void ll_scan_tx_cb (void)
   if(sync_flag==1)
   {
     // just send the req
-    //data_report_generate(m_scanner.state,"sync_flag=1_just_send_req_into_scan",sizeof("sync_flag=1_just_send_req_into_scan"));
+    data_report_generate(m_scanner.state,"sync",sizeof("sync"));
     m_state_send_scan_req_exit ();
     m_state_receive_adv_entry();
   }
@@ -603,6 +603,7 @@ void ll_scan_tx_cb (void)
      */
     case SCANNER_STATE_SEND_REQ:
       // sync here!! to be modified
+			data_report_generate(m_scanner.state,"req",sizeof("req"));
       m_state_send_scan_req_exit ();
       //m_state_receive_scan_rsp_entry ();
       m_state_receive_adv_exit();

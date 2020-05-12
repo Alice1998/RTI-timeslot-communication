@@ -246,7 +246,7 @@ int main(void)
                 strcat(log_out_msg,tmp_buff);
               }
               strcat(log_out_msg,"\r\n");
-              for(int i=0;i<sensor_count-1;i++)
+              for(int i=0;i<sensor_count;i++)
               {
                 sprintf(tmp_buff,"[%d]",i);
                 strcat(log_out_msg,tmp_buff);

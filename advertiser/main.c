@@ -390,7 +390,7 @@ void SWI0_IRQHandler(void)
       
 			case BTLE_EVENT_LE_ADVERTISING_REPORT:
 				memset(buf,0,256);
-        if (report.event.params.le_advertising_report_event.report_data[0]==0x50)
+        if (report.event.params.le_advertising_report_event.report_data[0]==0x10)
 				{
 					//if(report.event.params.le_advertising_report_event.report_data[1]==0xc3)
 						snprintf(buf,256,"[D]: %X %X %X %X %X %X : %X %X %X %X - %X %X %X %X %X \r\n",
