@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#python2
 # -*-coding: utf-8 -*-
 
 import serial
