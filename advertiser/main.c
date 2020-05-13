@@ -382,7 +382,7 @@ void SWI0_IRQHandler(void)
     switch (report.event.event_code)
     {
       case BTLE_VS_EVENT_NRF_LL_EVENT_SCAN_REQ_REPORT:
-        snprintf(buf, 256, "S %X \tRSSI: %i\r\n",
+        snprintf(buf, 256, "S %X %i\r\n",
           report.event.params.nrf_scan_req_report_event.address[0],
           report.event.params.nrf_scan_req_report_event.rssi);
         uart_putstring((uint8_t*) buf);
@@ -390,7 +390,7 @@ void SWI0_IRQHandler(void)
       
 			case BTLE_EVENT_LE_ADVERTISING_REPORT:
 				memset(buf,0,256);
-        if (report.event.params.le_advertising_report_event.report_data[0]==0x10)
+        if (report.event.params.le_advertising_report_event.report_data[0]==0x11)
 				{
 					//if(report.event.params.le_advertising_report_event.report_data[1]==0xc3)
 						snprintf(buf,256,"[D]: %X %X %X %X %X %X : %X %X %X %X - %X %X %X %X %X \r\n",
@@ -411,7 +411,7 @@ void SWI0_IRQHandler(void)
           report.event.params.le_advertising_report_event.report_data[15]);
 				}
 				else
-		    	snprintf(buf,256,"[R]: %X \r\n",report.event.params.le_advertising_report_event.report_data[0]);
+		    	snprintf(buf,256,"%X \r\n",report.event.params.le_advertising_report_event.report_data[0]);
         uart_putstring((uint8_t*) buf);
         break;
       /* For now, the only event we care about is the scan req event. */
