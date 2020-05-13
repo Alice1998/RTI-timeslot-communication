@@ -113,9 +113,10 @@ static uint8_t rng_pool[255];
 /* A pointer into our pool. Will wrap around upon overflow */
 static uint8_t pool_index = 0;
 
-static uint8_t TEST_REQ[]={0xc3,0x0c,0x1,0xa};
+
+static uint8_t TEST_REQ[]={0xc3,0x2,0x1,0xa};
 static uint8_t TEST_RSP[]={0x44,0x1F,0x0};
-static uint8_t adv_data_local[]={0x46,0x20,0x00,0x0};
+static uint8_t adv_data_local[]={0x46,0x1,0x00,0x0};
 static uint8_t ble_scan_rsp_data[35]; //3 1 31
 uint8_t ALL_SENSOR_COUNT=8;
 
@@ -134,8 +135,8 @@ static nrf_radio_request_t g_timeslot_req_earliest =
 			.params.earliest = {
 						HFCLK, 
 						NRF_RADIO_PRIORITY_NORMAL, 
-						5000,		
-						5000}
+						2500,		
+						2500}
 			};
 
 /* timeslot request NORMAL. Used to request a periodic timeslot, i.e. advertisement events */
@@ -144,8 +145,8 @@ static nrf_radio_request_t g_timeslot_req_normal =
 			.params.normal = {
 						HFCLK, 
 						NRF_RADIO_PRIORITY_NORMAL, 
-						5000,	
-						5000}
+						2500,	
+						2500}
 			};
 
 
@@ -251,6 +252,9 @@ static uint8_t is_central_req_sensor_rsq(void)
 	if(memcmp((void *)ble_rx_buf,(void *)TEST_REQ,4)==0)
 	{
 		ALL_SENSOR_COUNT=ble_rx_buf[4];
+		TEST_RSP[1]=ALL_SENSOR_COUNT+1;
+		ble_scan_rsp_data[1]=ALL_SENSOR_COUNT+1;
+		
 		++packet_count_valid;
 		return 1;
 	}
@@ -518,6 +522,7 @@ void ctrl_init(void)
 	that is in line with BLE spec */
 
 	adv_data_local[3]  = UNIQUE_INDEX;
+	TEST_RSP[1]=ALL_SENSOR_COUNT+1;
 #if TS_SEND_SCAN_RSP	
 	memset(&ble_scan_rsp_data[0], 0, 35);
 	memcpy(ble_scan_rsp_data,TEST_RSP,3);
@@ -636,7 +641,7 @@ __INLINE void ctrl_signal_handler(uint8_t sig)
 		
 #if TS_SEND_SCAN_RSP		
 		case NRF_RADIO_CALLBACK_SIGNAL_TYPE_TIMER0:
-			generate_report(0x10,NULL);
+			//generate_report(0x10,NULL);
 			if (NRF_TIMER0->EVENTS_COMPARE[0] != 0)
 			{
 				periph_timer_abort(0);

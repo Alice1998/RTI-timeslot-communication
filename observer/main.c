@@ -233,8 +233,10 @@ int main(void)
 							report.valid_packets,
 							report.invalid_packets);
           else if(report.event.params.le_advertising_report_event.report_data[0]==0x44)
-						__LOG("%i %i",
+						__LOG("%i %i %i %i",
 							report.event.params.le_advertising_report_event.address[0],
+					report.event.params.le_advertising_report_event.report_data[1],
+					report.event.params.le_advertising_report_event.report_data[2],
 							report.event.params.le_advertising_report_event.rssi);
 					else if(report.event.params.le_advertising_report_event.report_data[0]==0x00)
           {

@@ -125,7 +125,7 @@ static uint8_t m_rx_buf[RX_BUF_SIZE];
 static uint8_t m_tx_buf[] =
 {
   0xC3,                               // BLE Header (PDU_TYPE: SCAN_REQ, TXadd: 1 (random address), RXadd: 1 (random address)
-  0x0C,                               // Length of payload: 12
+  0x02,                               // Length of payload: 12
   0x01,                               // Padding bits for S1 (REF: the  nRF51 reference manual 16.1.2)
 	0xa,
   ALL_SENSOR_COUNT,
@@ -139,8 +139,8 @@ static uint8_t SENSOR_MAX=32;
 
 static uint32_t sensor_adv_map=0;
 static uint8_t sensor_rsp_count=0;
-static uint8_t MY_ADV_PACKET_POS0_POS2[]={0x46,0x20,0x00};
-static uint8_t MY_RSP_PACKET_POS0_POS2[]={0x44,0x1F,0x00};
+static uint8_t MY_ADV_PACKET_POS0_POS2[]={0x46,0x01,0x00};
+static uint8_t MY_RSP_PACKET_POS0_POS2[]={0x44,ALL_SENSOR_COUNT+1,0x00};
 static uint8_t sensor_packet_count[31];
 static uint8_t sensor_adv_count=0;
 static uint8_t sync_flag=0; // to be modified!!
@@ -221,7 +221,7 @@ static void m_adv_report_generate(uint8_t * const pkt)
   if(pkt[0]==MY_RSP_PACKET_POS0_POS2[0])
   {
    adv_report->length_data=ALL_SENSOR_COUNT-1;
-   memcpy(&(adv_report->report_data[1]), &pkt[4], ALL_SENSOR_COUNT-1);
+   memcpy(&(adv_report->report_data[1]), &pkt[4], ALL_SENSOR_COUNT);
   }
 
   report.valid_packets = m_packets_valid;
@@ -493,7 +493,7 @@ void ll_scan_rx_cb (bool crc_valid)
 					//data_report_generate(m_rx_buf[2],"---receive_rsp---",sizeof("---receive_rsp---"));
 					uint8_t index=get_packet_index(m_rx_buf)-1;
 					sensor_packet_count[index]++;
-					memcpy(rssi_matrix_data[index],&m_rx_buf[4],ALL_SENSOR_COUNT);
+					memcpy(&rssi_matrix_data[index][0],&m_rx_buf[4],ALL_SENSOR_COUNT);
 					m_adv_report_generate(m_rx_buf);	
 				}
         m_state_receive_adv_entry ();
