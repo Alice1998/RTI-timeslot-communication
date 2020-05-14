@@ -390,6 +390,7 @@ void SWI0_IRQHandler(void)
       
 			case BTLE_EVENT_LE_ADVERTISING_REPORT:
 				memset(buf,0,256);
+			/*
         if (report.event.params.le_advertising_report_event.report_data[0]==0x11)
 				{
 					//if(report.event.params.le_advertising_report_event.report_data[1]==0xc3)
@@ -411,6 +412,7 @@ void SWI0_IRQHandler(void)
           report.event.params.le_advertising_report_event.report_data[15]);
 				}
 				else
+					*/
 		    	snprintf(buf,256,"%X \r\n",report.event.params.le_advertising_report_event.report_data[0]);
         uart_putstring((uint8_t*) buf);
         break;

@@ -120,6 +120,7 @@ static uint8_t adv_data_local[]={0x46,0x1,0x00,0x0};
 static uint8_t ble_scan_rsp_data[35]; //3 1 31
 uint8_t ALL_SENSOR_COUNT=8;
 uint16_t first_sync_timer_value=0;
+uint16_t timeslot_length=2500;
 
 
 /*****************************************************************************
@@ -331,14 +332,16 @@ static __INLINE void next_timeslot_schedule(void)
 		if (first_timeslot_req_normal.params.normal.distance_us==0&&first_sync_timer_value!=0)
 		{
 			uint16_t value=first_sync_timer_value*125>>2;
-			generate_report(value);
-			first_timeslot_req_normal.params.normal.distance_us=g_timeslot_req_normal.params.normal.distance_us-value;
-			first_timeslot_req_normal.params.normal.timess.length_us=g_timeslot_req_normal.params.normal.length_us-value;
+			timeslot_length=g_timeslot_req_normal.params.normal.distance_us-value;
+			generate_report(value,NULL);
+			first_timeslot_req_normal.params.normal.distance_us=timeslot_length;
+			first_timeslot_req_normal.params.normal.length_us=timeslot_length;
 			g_signal_callback_return_param.params.request.p_next = &first_timeslot_req_normal;
 		}
 		else
 		{
-			
+			timeslot_length=g_timeslot_req_normal.params.normal.length_us;
+			g_signal_callback_return_param.params.request.p_next=&g_timeslot_req_normal;
 		}
 		
 		g_signal_callback_return_param.callback_action = NRF_RADIO_SIGNAL_CALLBACK_ACTION_REQUEST_AND_END;
@@ -569,8 +572,6 @@ __INLINE void ctrl_signal_handler(uint8_t sig)
 			if (g_timeslot_req_normal.params.normal.distance_us<1100)
 				value=100;
 			periph_timer_start(0,value,true);	
-			uint16_t value=get_my_timer_time();
-			generate_report(value,NULL);
 			my_app_timer_refresh();
 			//my_timer_abort();
 			//my_timer_start();
@@ -675,9 +676,10 @@ __INLINE void ctrl_signal_handler(uint8_t sig)
 		
 #if TS_SEND_SCAN_RSP		
 		case NRF_RADIO_CALLBACK_SIGNAL_TYPE_TIMER0:
-			//generate_report(0x10,NULL);
 			if (NRF_TIMER0->EVENTS_COMPARE[0] != 0)
 			{
+				if(START_FLAG==1)
+					generate_report(0x10,NULL);
 				periph_timer_abort(0);
 				next_timeslot_schedule();
 				//periph_radio_intenclr(RADIO_INTENCLR_DISABLED_Msk); ...

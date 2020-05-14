@@ -265,7 +265,7 @@ __INLINE void my_timer_abort()
 	NRF_RTC1->TASKS_CLEAR =1;
 }
 
-__INLINE my_app_timer_refresh()
+__INLINE void my_app_timer_refresh()
 {
 	NRF_RTC1->TASKS_STOP=1;
 	NRF_RTC1->TASKS_CLEAR =1;
