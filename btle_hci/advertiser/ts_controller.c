@@ -546,7 +546,11 @@ __INLINE void ctrl_signal_handler(uint8_t sig)
 	{
 		case NRF_RADIO_CALLBACK_SIGNAL_TYPE_START:	
 			DEBUG_PIN_POKE(3);
-			periph_timer_start(0,(uint16_t)g_timeslot_req_normal.params.normal.distance_us-1000,true);		
+			periph_timer_start(0,(uint16_t)g_timeslot_req_normal.params.normal.distance_us-1000,true);	
+			uint16_t value=get_my_timer_time();
+			generate_report(value,NULL);
+			my_timer_abort();
+			my_timer_start();
 			adv_evt_setup();
 			if(START_FLAG==0)
 				sm_enter_adv_send();
@@ -600,7 +604,7 @@ __INLINE void ctrl_signal_handler(uint8_t sig)
 						{
 							//scan_req_evt_dispatch();
 							generate_report(0x20,NULL);
-							generate_report(NRF_TIMER0->CC[0],NULL);
+							generate_report(get_my_timer_time(),NULL);
 							deal_sync_packet();
 							//send_rsp_packet();
 						}
@@ -625,7 +629,6 @@ __INLINE void ctrl_signal_handler(uint8_t sig)
 #endif
 				case STATE_SEND_RSP:
 					generate_report(0x50,NULL);
-					generate_report(NRF_TIMER0->CC[0],NULL);
 					exit_send_rsp_state();
 					sm_enter_scan_req_rsp();
 					break;
@@ -646,11 +649,13 @@ __INLINE void ctrl_signal_handler(uint8_t sig)
 			//generate_report(0x10,NULL);
 			if (NRF_TIMER0->EVENTS_COMPARE[0] != 0)
 			{
+				generate_report(get_my_timer_time(),NULL);
 				periph_timer_abort(0);
 				next_timeslot_schedule();
 				//periph_radio_intenclr(RADIO_INTENCLR_DISABLED_Msk); ...
 			}
 			PERIPHERAL_TASK_TRIGGER(NRF_RADIO->TASKS_DISABLE);
+
 			break;
 #endif		
 

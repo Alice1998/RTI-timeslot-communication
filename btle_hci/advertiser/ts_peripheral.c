@@ -119,6 +119,7 @@ bool periph_radio_setup(void)
 	/* Timer: 1us resolution, disable peripheral */
 	//NRF_TIMER0->PRESCALER = 1; // changed here
 	//NRF_TIMER0->TASKS_STOP = 1;
+	NRF_RTC1->PRESCALER=0;
 	
 	/* Do BLE specific radio setup */
 	radio_init();
@@ -243,22 +244,25 @@ __INLINE void periph_timer_start(uint8_t timer, uint16_t value, bool interrupt)
 	NRF_TIMER0->CC[timer] = value; /* timeout for RX abort */
 }
 
-void my_timer_start()
+__INLINE void my_timer_start()
 {
-	NRF_TIMER1->TASKS_START = 1;
-	NRF_TIMER1->TASKS_STOP=0;
-	NRF_TIMER1->TASKS_CLEAR = 1;
-	NRF_TIMER1->EVENTS_COMPARE[0] = 0; 
+	NRF_RTC1->EVTENSET=RTC_EVTEN_COMPARE0_Msk;
+	NRF_RTC1->INTENSET=RTC_INTENSET_COMPARE0_Msk;
+	
+	NRF_RTC1->TASKS_START=1;
 }
 
-uint8_t get_my_timer_time()
+__INLINE uint16_t get_my_timer_time()
 {
-	return NRF_TIMER1->cc[0];
+	return NRF_RTC1->COUNTER;
 }
-void my_timer_abort()
+__INLINE void my_timer_abort()
 {
-	NRF_TIMER1->EVENTS_COMPARE[timer] = 0;
-	NRF_TIMER1->TASKS_STOP = 1;
+	NRF_RTC1->EVTENSET=RTC_EVTEN_COMPARE0_Msk;
+	NRF_RTC1->INTENSET=RTC_INTENSET_COMPARE0_Msk;
+	
+	NRF_RTC1->TASKS_STOP=1;
+	NRF_RTC1->TASKS_CLEAR =1;
 }
 
 __INLINE void periph_timer_abort(uint8_t timer)

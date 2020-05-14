@@ -92,7 +92,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 void my_timer_start();
 
-uint8_t get_my_timer_time();
+uint16_t get_my_timer_time();
 
 void my_timer_abort();
 
