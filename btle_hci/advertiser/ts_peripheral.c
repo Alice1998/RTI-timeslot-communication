@@ -265,6 +265,13 @@ __INLINE void my_timer_abort()
 	NRF_RTC1->TASKS_CLEAR =1;
 }
 
+__INLINE my_app_timer_refresh()
+{
+	NRF_RTC1->TASKS_STOP=1;
+	NRF_RTC1->TASKS_CLEAR =1;
+	NRF_RTC1->TASKS_START=1;
+}
+
 __INLINE void periph_timer_abort(uint8_t timer)
 {
 	ASSERT(timer < 4);

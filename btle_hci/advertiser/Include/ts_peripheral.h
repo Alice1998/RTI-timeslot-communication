@@ -95,6 +95,7 @@ void my_timer_start();
 uint16_t get_my_timer_time();
 
 void my_timer_abort();
+void my_app_timer_refresh();
 
 /**
 * Enable timer compare with given index in NRF_TIMER0. Resets the timer counter.

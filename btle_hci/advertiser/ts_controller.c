@@ -119,6 +119,7 @@ static uint8_t TEST_RSP[]={0x44,0x1F,0x0};
 static uint8_t adv_data_local[]={0x46,0x1,0x00,0x0};
 static uint8_t ble_scan_rsp_data[35]; //3 1 31
 uint8_t ALL_SENSOR_COUNT=8;
+uint16_t first_sync_timer_value=0;
 
 
 /*****************************************************************************
@@ -137,6 +138,15 @@ static nrf_radio_request_t g_timeslot_req_earliest =
 						NRF_RADIO_PRIORITY_NORMAL, 
 						2500,		
 						2500}
+			};
+
+static nrf_radio_request_t first_timeslot_req_normal =
+			{NRF_RADIO_REQ_TYPE_NORMAL, 
+			.params.normal = {
+						HFCLK, 
+						NRF_RADIO_PRIORITY_NORMAL, 
+						0,	
+						0}
 			};
 
 /* timeslot request NORMAL. Used to request a periodic timeslot, i.e. advertisement events */
@@ -318,11 +328,20 @@ static __INLINE void next_timeslot_schedule(void)
 {
 	if (sm_adv_run)
 	{
-		//g_timeslot_req_normal.params.normal.distance_us = ADV_INTERVAL_TRANSLATE(adv_int_min) + 1000 * ((rng_pool[pool_index++]) % (ADV_INTERVAL_TRANSLATE(adv_int_max - adv_int_min)));
-		g_signal_callback_return_param.params.request.p_next = &g_timeslot_req_normal;
+		if (first_timeslot_req_normal.params.normal.distance_us==0&&first_sync_timer_value!=0)
+		{
+			uint16_t value=first_sync_timer_value*125>>2;
+			generate_report(value);
+			first_timeslot_req_normal.params.normal.distance_us=g_timeslot_req_normal.params.normal.distance_us-value;
+			first_timeslot_req_normal.params.normal.timess.length_us=g_timeslot_req_normal.params.normal.length_us-value;
+			g_signal_callback_return_param.params.request.p_next = &first_timeslot_req_normal;
+		}
+		else
+		{
+			
+		}
+		
 		g_signal_callback_return_param.callback_action = NRF_RADIO_SIGNAL_CALLBACK_ACTION_REQUEST_AND_END;
-		//if(NRF_TIMER0->EVENTS_COMPARE[0]!=0)
-		//	periph_timer_abort(0);
 	}
 	else
 	{
@@ -546,11 +565,15 @@ __INLINE void ctrl_signal_handler(uint8_t sig)
 	{
 		case NRF_RADIO_CALLBACK_SIGNAL_TYPE_START:	
 			DEBUG_PIN_POKE(3);
-			periph_timer_start(0,(uint16_t)g_timeslot_req_normal.params.normal.distance_us-1000,true);	
+			uint16_t value=g_timeslot_req_normal.params.normal.distance_us-1000;
+			if (g_timeslot_req_normal.params.normal.distance_us<1100)
+				value=100;
+			periph_timer_start(0,value,true);	
 			uint16_t value=get_my_timer_time();
 			generate_report(value,NULL);
-			my_timer_abort();
-			my_timer_start();
+			my_app_timer_refresh();
+			//my_timer_abort();
+			//my_timer_start();
 			adv_evt_setup();
 			if(START_FLAG==0)
 				sm_enter_adv_send();
@@ -604,7 +627,13 @@ __INLINE void ctrl_signal_handler(uint8_t sig)
 						{
 							//scan_req_evt_dispatch();
 							generate_report(0x20,NULL);
-							generate_report(get_my_timer_time(),NULL);
+							uint16_t sync_timer_value=get_my_timer_time();
+							if (START_FLAG==0)
+							{
+								generate_report(0x30,NULL);
+								first_sync_timer_value=sync_timer_value;
+							}
+							generate_report(sync_timer_value,NULL);
 							deal_sync_packet();
 							//send_rsp_packet();
 						}
@@ -649,7 +678,6 @@ __INLINE void ctrl_signal_handler(uint8_t sig)
 			//generate_report(0x10,NULL);
 			if (NRF_TIMER0->EVENTS_COMPARE[0] != 0)
 			{
-				generate_report(get_my_timer_time(),NULL);
 				periph_timer_abort(0);
 				next_timeslot_schedule();
 				//periph_radio_intenclr(RADIO_INTENCLR_DISABLED_Msk); ...
