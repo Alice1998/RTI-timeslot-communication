@@ -307,7 +307,7 @@ int main(void)
   uart_init();
 
   char start_msg[128];
-  sprintf(&start_msg[0], "%s |---------------------------------------------------\r\n", __TIME__);
+  sprintf(&start_msg[0], "|---------------------------------------------------\r\n");
   uart_putstring((uint8_t*) &start_msg[0]);
 	
 

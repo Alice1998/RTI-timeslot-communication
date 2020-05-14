@@ -91,7 +91,7 @@ nrf_radio_signal_callback_return_param_t *radio_cb (uint8_t sig)
       NRF_TIMER0->TASKS_CLEAR = 1;
       NRF_TIMER0->EVENTS_COMPARE[0] = 0;
       NRF_TIMER0->INTENSET = TIMER_INTENSET_COMPARE0_Msk;
-      NRF_TIMER0->CC[0] = m_timeslot_req_normal.params.normal.length_us-600;  
+      NRF_TIMER0->CC[0] = m_timeslot_req_normal.params.normal.length_us-1000;  
 
 			ll_scan_start ();
 

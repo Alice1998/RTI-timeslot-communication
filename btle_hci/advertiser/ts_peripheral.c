@@ -243,6 +243,24 @@ __INLINE void periph_timer_start(uint8_t timer, uint16_t value, bool interrupt)
 	NRF_TIMER0->CC[timer] = value; /* timeout for RX abort */
 }
 
+void my_timer_start()
+{
+	NRF_TIMER1->TASKS_START = 1;
+	NRF_TIMER1->TASKS_STOP=0;
+	NRF_TIMER1->TASKS_CLEAR = 1;
+	NRF_TIMER1->EVENTS_COMPARE[0] = 0; 
+}
+
+uint8_t get_my_timer_time()
+{
+	return NRF_TIMER1->cc[0];
+}
+void my_timer_abort()
+{
+	NRF_TIMER1->EVENTS_COMPARE[timer] = 0;
+	NRF_TIMER1->TASKS_STOP = 1;
+}
+
 __INLINE void periph_timer_abort(uint8_t timer)
 {
 	ASSERT(timer < 4);

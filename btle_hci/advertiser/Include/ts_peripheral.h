@@ -90,6 +90,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * Interface functions
 *****************************************************************************/
 
+void my_timer_start();
+
+uint8_t get_my_timer_time();
+
+void my_timer_abort();
+
 /**
 * Enable timer compare with given index in NRF_TIMER0. Resets the timer counter.
 * Use the interrupt flag to set whether an interrupt for the compare should be 
