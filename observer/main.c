@@ -210,7 +210,7 @@ int main(void)
 	
   nrf_adv_conn_init ();
 	
-	uint8_t ** rssi_data=read_rssi_matrix();
+	//uint8_t ** rssi_data=read_rssi_matrix();
   uint8_t sensor_count=get_sensor_count();
   char log_out_msg[1024];
   char tmp_buff[31];
@@ -233,23 +233,26 @@ int main(void)
 							report.valid_packets,
 							report.invalid_packets);
           else if(report.event.params.le_advertising_report_event.report_data[0]==0x44)
-						__LOG("%i %i %i %i",
-							report.event.params.le_advertising_report_event.address[0],
-					report.event.params.le_advertising_report_event.report_data[1],
-					report.event.params.le_advertising_report_event.report_data[2],
-							report.event.params.le_advertising_report_event.rssi);
+          {
+            memset(log_out_msg, 0, sizeof(log_out_msg));
+            sprintf(tmp_buff, "%d %d-",report.event.params.le_advertising_report_event.address[0],report.event.params.le_advertising_report_event.rssi);
+            strcpy(log_out_msg,tmp_buff);
+            strcat(log_out_msg,&report.event.params.le_advertising_report_event.report_data[1]);
+            __LOG("%s",log_out_msg);
+          }
 					else if(report.event.params.le_advertising_report_event.report_data[0]==0x00)
           {
               memset(log_out_msg, 0, sizeof(log_out_msg));
-						/*
               strcpy(log_out_msg,"C");
               for(int i=0;i<sensor_count;i++)
               {
                 sprintf(tmp_buff, " %d",report.event.params.le_advertising_report_event.report_data[1+i]);
                 strcat(log_out_msg,tmp_buff);
               }
+              __LOG("%s",log_out_msg);
+              /*
               strcat(log_out_msg,"\r\n");
-						*/
+						
               for(int i=0;i<sensor_count;i++)
               {
                 //sprintf(tmp_buff,"%d",i);
@@ -263,6 +266,7 @@ int main(void)
               }
               __LOG("%s",log_out_msg);
               clear_rssi_matrix();
+              */
           }
 							break;
 							

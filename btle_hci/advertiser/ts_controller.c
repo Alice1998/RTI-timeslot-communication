@@ -333,7 +333,9 @@ static __INLINE void next_timeslot_schedule(void)
 		{
 			uint16_t value=first_sync_timer_value*125>>2;
 			timeslot_length=g_timeslot_req_normal.params.normal.distance_us-value;
+			#if DEBUG_LOG
 			generate_report(value,NULL);
+			#endif
 			first_timeslot_req_normal.params.normal.distance_us=timeslot_length;
 			first_timeslot_req_normal.params.normal.length_us=timeslot_length;
 			g_signal_callback_return_param.params.request.p_next = &first_timeslot_req_normal;
@@ -580,7 +582,9 @@ __INLINE void ctrl_signal_handler(uint8_t sig)
 				sm_enter_adv_send();
 			else
 			{
+				#if DEBUG_LOG
 				generate_report(REQ_TIMESLOT_COUNT,NULL);
+				#endif
 				if(REQ_TIMESLOT_COUNT==UNIQUE_INDEX)
 					send_rsp_packet();
 				else
@@ -627,14 +631,16 @@ __INLINE void ctrl_signal_handler(uint8_t sig)
 						if(for_me==1)
 						{
 							//scan_req_evt_dispatch();
-							generate_report(0x20,NULL);
 							uint16_t sync_timer_value=get_my_timer_time();
+							#if DEBUG_LOG
+							generate_report(0x20,NULL);
+							generate_report(sync_timer_value,NULL);
+							#endif
 							if (START_FLAG==0)
 							{
 								generate_report(0x30,NULL);
 								first_sync_timer_value=sync_timer_value;
 							}
-							generate_report(sync_timer_value,NULL);
 							deal_sync_packet();
 							//send_rsp_packet();
 						}
@@ -642,7 +648,9 @@ __INLINE void ctrl_signal_handler(uint8_t sig)
 						else if(for_me==2)
 						{
 							//generate_report(0x32,NULL);
+							#if DEBUG_LOG
 							scan_req_evt_dispatch();
+							#endif
 							int8_t rsp_sensor_index=get_packet_index(ble_rx_buf);
 							//generate_report(0x55+rsp_sensor_index,NULL);
 							// other sensor rsp packet
@@ -658,7 +666,9 @@ __INLINE void ctrl_signal_handler(uint8_t sig)
 					break;
 #endif
 				case STATE_SEND_RSP:
+					#if DEBUG_LOG
 					generate_report(0x50,NULL);
+					#endif
 					exit_send_rsp_state();
 					sm_enter_scan_req_rsp();
 					break;
@@ -678,8 +688,6 @@ __INLINE void ctrl_signal_handler(uint8_t sig)
 		case NRF_RADIO_CALLBACK_SIGNAL_TYPE_TIMER0:
 			if (NRF_TIMER0->EVENTS_COMPARE[0] != 0)
 			{
-				if(START_FLAG==1)
-					generate_report(0x10,NULL);
 				periph_timer_abort(0);
 				next_timeslot_schedule();
 				//periph_radio_intenclr(RADIO_INTENCLR_DISABLED_Msk); ...

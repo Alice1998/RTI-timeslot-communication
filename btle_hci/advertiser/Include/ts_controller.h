@@ -44,6 +44,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // sensor index modified here
 #define UNIQUE_INDEX 2
+#define DEBUG_LOG 1
 
 
 #define HFCLK                   NRF_RADIO_HFCLK_CFG_FORCE_XTAL

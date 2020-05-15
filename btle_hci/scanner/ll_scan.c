@@ -167,6 +167,7 @@ static void m_state_receive_scan_rsp_exit (void);
 /*****************************************************************************
 * Static Function definitions
 *****************************************************************************/
+/*
 uint8_t **rssi_matrix_data;
 
 void init_rssi_matrix()
@@ -185,7 +186,7 @@ void clear_rssi_data()
 	for(int i=0;i<ALL_SENSOR_COUNT;i++)
 		memset(rssi_matrix_data[i],0,sizeof(uint8_t)*ALL_SENSOR_COUNT);
 }
-	
+*/
 
 app_timer_id_t my_timer;
 uint32_t app_timer_counter=0;
@@ -257,6 +258,7 @@ static void matrix_data_dispatch()
   adv_report->report_data[0]=0x0;
   adv_report->length_data=ALL_SENSOR_COUNT-1;
   memcpy(&(adv_report->report_data[1]), sensor_packet_count, ALL_SENSOR_COUNT);
+  adv_report->report_data[1+ALL_SENSOR_COUNT]=0;
 
 /*
   for(int i=0;i<ALL_SENSOR_COUNT-1;i++)
@@ -493,7 +495,7 @@ void ll_scan_rx_cb (bool crc_valid)
 					//data_report_generate(m_rx_buf[2],"---receive_rsp---",sizeof("---receive_rsp---"));
 					uint8_t index=get_packet_index(m_rx_buf)-1;
 					sensor_packet_count[index]++;
-					memcpy(&rssi_matrix_data[index][0],&m_rx_buf[4],ALL_SENSOR_COUNT);
+					//memcpy(&rssi_matrix_data[index][0],&m_rx_buf[4],ALL_SENSOR_COUNT);
 					m_adv_report_generate(m_rx_buf);	
 				}
         m_state_receive_adv_entry ();
