@@ -120,7 +120,7 @@ static uint8_t adv_data_local[]={0x46,0x1,0x00,0x0};
 static uint8_t ble_scan_rsp_data[35]; //3 1 31
 uint8_t ALL_SENSOR_COUNT=8;
 uint16_t first_sync_timer_value=0;
-uint16_t timeslot_length=2500;
+uint16_t timeslot_length=MY_TIMESLOT_LENGTH;
 
 
 /*****************************************************************************
@@ -137,8 +137,8 @@ static nrf_radio_request_t g_timeslot_req_earliest =
 			.params.earliest = {
 						HFCLK, 
 						NRF_RADIO_PRIORITY_NORMAL, 
-						2500,		
-						2500}
+						MY_TIMESLOT_LENGTH,		
+						MY_TIMESLOT_LENGTH}
 			};
 
 static nrf_radio_request_t first_timeslot_req_normal =
@@ -156,8 +156,8 @@ static nrf_radio_request_t g_timeslot_req_normal =
 			.params.normal = {
 						HFCLK, 
 						NRF_RADIO_PRIORITY_NORMAL, 
-						2500,	
-						2500}
+						MY_TIMESLOT_LENGTH,	
+						MY_TIMESLOT_LENGTH}
 			};
 
 

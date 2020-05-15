@@ -48,7 +48,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #define HFCLK                   NRF_RADIO_HFCLK_CFG_FORCE_XTAL
-#define TIMESLOT_LENGTH         4300
+#define MY_TIMESLOT_LENGTH         3000
 #define TIMESLOT_INTERVAL_100MS  100000
 
                               

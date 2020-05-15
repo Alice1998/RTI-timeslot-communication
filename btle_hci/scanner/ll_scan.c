@@ -172,9 +172,9 @@ uint8_t **rssi_matrix_data;
 
 void init_rssi_matrix()
 {
-	rssi_matrix_data=(uint8_t**)malloc(31*sizeof(uint8_t*));
-	for(int i=0;i<31;i++)
-	rssi_matrix_data[i]=(uint8_t*)malloc(31*sizeof(uint8_t));
+	rssi_matrix_data=(uint8_t**)malloc(30*sizeof(uint8_t*));
+	for(int i=0;i<30;i++)
+	  rssi_matrix_data[i]=(uint8_t*)malloc(32*sizeof(uint8_t));
 	//memset(rssi_matrix,0,sizeof(rssi_matrix));
 }
 uint8_t** get_rssi_data()
@@ -184,7 +184,7 @@ uint8_t** get_rssi_data()
 void clear_rssi_data()
 {
 	for(int i=0;i<ALL_SENSOR_COUNT;i++)
-		memset(rssi_matrix_data[i],0,sizeof(uint8_t)*ALL_SENSOR_COUNT);
+		memset(rssi_matrix_data[i],0,sizeof(uint8_t)*(ALL_SENSOR_COUNT+2));
 }
 
 
@@ -256,9 +256,8 @@ static void matrix_data_dispatch()
 
 	
   adv_report->report_data[0]=0x0;
-  adv_report->length_data=ALL_SENSOR_COUNT-1;
-  memcpy(&(adv_report->report_data[1]), sensor_packet_count, ALL_SENSOR_COUNT);
-  adv_report->report_data[1+ALL_SENSOR_COUNT]=0;
+  adv_report->length_data=ALL_SENSOR_COUNT;
+  //memcpy(&(adv_report->report_data[1]), sensor_packet_count, ALL_SENSOR_COUNT);
 
 /*
   for(int i=0;i<ALL_SENSOR_COUNT-1;i++)
@@ -494,8 +493,13 @@ void ll_scan_rx_cb (bool crc_valid)
 				{
 					//data_report_generate(m_rx_buf[2],"---receive_rsp---",sizeof("---receive_rsp---"));
 					uint8_t index=get_packet_index(m_rx_buf)-1;
-					sensor_packet_count[index]++;
-					//memcpy(&rssi_matrix_data[index][0],&m_rx_buf[4],ALL_SENSOR_COUNT);
+					//sensor_packet_count[index]++;
+          rssi_matrix_data[index][0]++;
+          rssi_matrix_data[index][ALL_SENSOR_COUNT+1]=m_rssi;
+          for(int i=0;i<ALL_SENSOR_COUNT;i++)
+            if(m_rx_buf[4+i]!=0)
+              rssi_matrix_data[index][1+i]=m_rx_buf[4+i];
+					//memcpy(&rssi_matrix_data[index][1],&m_rx_buf[4],ALL_SENSOR_COUNT);
 					m_adv_report_generate(m_rx_buf);	
 				}
         m_state_receive_adv_entry ();
@@ -664,7 +668,7 @@ void send_req_for_sync(void)
     }
   sync_flag=1;
 	matrix_data_dispatch();
-	memset(sensor_packet_count,0,ALL_SENSOR_COUNT);
+	//memset(sensor_packet_count,0,ALL_SENSOR_COUNT);
   m_state_send_scan_req_entry();
 }
 

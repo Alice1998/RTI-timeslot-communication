@@ -21,8 +21,8 @@ def analysis_sensor():
     global data
     time_stamp=0
     last_send_rsp=0
-    with open("19-51-08.138000_sensor1.csv",'r') as f:
-    #with open("19-51-16.402000_sensor2.csv",'r') as f:
+    #with open("09-38-41.306000_sensor1.csv",'r') as f:
+    with open("09-38-37.931000_sensor2.csv",'r') as f:
         reader=csv.reader(f)
         for row in reader:
             if len(row)==2:
@@ -31,11 +31,11 @@ def analysis_sensor():
                     #print(time_stamp)
                 elif len(row[1])==len("1 \n"):
                     index=int(row[1][0],10)
-                    #if index>0 and index<3:
-                    #    time=get_timestamp(row[0])
-                    #    if index!=1 and time-last_send_rsp<0.02:
-                    #       data.append(time-last_send_rsp)
-                    #    last_send_rsp=time
+                    if index>0 and index<9:
+                       time=get_timestamp(row[0])
+                       if index!=1 and time-last_send_rsp<0.02:
+                          data.append(time-last_send_rsp)
+                       last_send_rsp=time
                 elif row[1]=="50 \n":
                     time=round(get_timestamp(row[0])-time_stamp,3)
                     if time<0.01:
@@ -48,12 +48,12 @@ def analysis_sensor():
 
 def analysis_central():
     time_stamp=0
-    with open("09-46-14.737000_central.csv",'r') as f:
+    with open("09-33-46.819000_central.csv",'r') as f:
         reader=csv.reader(f)
         for row in reader:
             if len(row)==2 and len(row[1])>0:
-                if row[1][0]==" ":
-                    time=central_get_timestamp(row[0])
+                if row[1][:3]=='"C ':
+                    time=get_timestamp(row[0])
                     #print(time,time_stamp,time-time_stamp)
                     if time-time_stamp<0.1:
                         data.append(time-time_stamp)
