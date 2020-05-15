@@ -167,7 +167,7 @@ static void m_state_receive_scan_rsp_exit (void);
 /*****************************************************************************
 * Static Function definitions
 *****************************************************************************/
-/*
+
 uint8_t **rssi_matrix_data;
 
 void init_rssi_matrix()
@@ -186,7 +186,7 @@ void clear_rssi_data()
 	for(int i=0;i<ALL_SENSOR_COUNT;i++)
 		memset(rssi_matrix_data[i],0,sizeof(uint8_t)*ALL_SENSOR_COUNT);
 }
-*/
+
 
 app_timer_id_t my_timer;
 uint32_t app_timer_counter=0;

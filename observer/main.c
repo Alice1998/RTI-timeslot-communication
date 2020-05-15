@@ -237,7 +237,11 @@ int main(void)
             memset(log_out_msg, 0, sizeof(log_out_msg));
             sprintf(tmp_buff, "%d %d-",report.event.params.le_advertising_report_event.address[0],report.event.params.le_advertising_report_event.rssi);
             strcpy(log_out_msg,tmp_buff);
-            strcat(log_out_msg,&report.event.params.le_advertising_report_event.report_data[1]);
+						for(int i=0;i<sensor_count;i++)
+						{
+							sprintf(tmp_buff,"%d ",report.event.params.le_advertising_report_event.report_data[1+i]);
+							strcat(log_out_msg,tmp_buff);
+						}
             __LOG("%s",log_out_msg);
           }
 					else if(report.event.params.le_advertising_report_event.report_data[0]==0x00)

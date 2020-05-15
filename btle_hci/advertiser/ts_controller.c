@@ -637,8 +637,10 @@ __INLINE void ctrl_signal_handler(uint8_t sig)
 							generate_report(sync_timer_value,NULL);
 							#endif
 							if (START_FLAG==0)
-							{
+							{	
+								#if DEBUG_LOG
 								generate_report(0x30,NULL);
+								#endif
 								first_sync_timer_value=sync_timer_value;
 							}
 							deal_sync_packet();
