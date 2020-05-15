@@ -169,22 +169,28 @@ static void m_state_receive_scan_rsp_exit (void);
 *****************************************************************************/
 
 uint8_t **rssi_matrix_data;
+uint8_t **main_rssi;
 
 void init_rssi_matrix()
 {
 	rssi_matrix_data=(uint8_t**)malloc(30*sizeof(uint8_t*));
+	main_rssi=(uint8_t**)malloc(30*sizeof(uint8_t*));
 	for(int i=0;i<30;i++)
+	{
 	  rssi_matrix_data[i]=(uint8_t*)malloc(32*sizeof(uint8_t));
+		main_rssi[i]=(uint8_t*)malloc(32*sizeof(uint8_t));
+	}
 	//memset(rssi_matrix,0,sizeof(rssi_matrix));
 }
 uint8_t** get_rssi_data()
 {
-	return rssi_matrix_data;
+	return main_rssi;
 }
 void clear_rssi_data()
 {
 	for(int i=0;i<ALL_SENSOR_COUNT;i++)
 		memset(rssi_matrix_data[i],0,sizeof(uint8_t)*(ALL_SENSOR_COUNT+2));
+	data_report_generate(0x0,"clear",sizeof("clear"));
 }
 
 
@@ -242,6 +248,12 @@ static void m_adv_report_generate(uint8_t * const pkt)
 	
 	
   adv_report->num_reports = 1;
+	
+	for(int i=0;i<ALL_SENSOR_COUNT;i++)
+	{
+		memcpy(main_rssi[i],rssi_matrix_data[i],(ALL_SENSOR_COUNT+2)*sizeof(uint8_t));
+		memset(rssi_matrix_data[i],0,(ALL_SENSOR_COUNT+2)*sizeof(uint8_t));
+	}
   nrf_report_disp_dispatch (&report);
 }
 

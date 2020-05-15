@@ -206,15 +206,18 @@ int main(void)
   // a timeslot is requested here
   btle_err_code = btle_scan_enable_set (scan_enable);
   ASSERT (btle_err_code == BTLE_STATUS_CODE_SUCCESS);
-  __LOG ("Scanner enabled\r\n");
+  __LOG ("Scanner enabled");
 	
   nrf_adv_conn_init ();
 	
-	uint8_t ** rssi_data=read_rssi_matrix();
+	//uint8_t ** rssi_data=read_rssi_matrix();
+	uint8_t rssi_data[30][32];
+	memset(rssi_data,0,sizeof(rssi_data));
   uint8_t sensor_count=get_sensor_count();
-  char log_out_msg[1024];
-  char tmp_buff[31];
-  memset(log_out_msg, 0, sizeof(log_out_msg));
+	uint8_t my_index;
+  //char log_out_msg[1024];
+  //char tmp_buff[31];
+  //memset(log_out_msg, 0, sizeof(log_out_msg));
 
   while (true)
   {
@@ -234,28 +237,35 @@ int main(void)
 							report.invalid_packets);
           else if(report.event.params.le_advertising_report_event.report_data[0]==0x44)
           {
-            memset(log_out_msg, 0, sizeof(log_out_msg));
-            sprintf(tmp_buff, "%d %d",report.event.params.le_advertising_report_event.address[0],report.event.params.le_advertising_report_event.rssi);
-            strcpy(log_out_msg,tmp_buff);
-            /*
+            //memset(log_out_msg, 0, sizeof(log_out_msg));
+            //sprintf(tmp_buff, "%d %d ",report.event.params.le_advertising_report_event.address[0],report.event.params.le_advertising_report_event.rssi);
+            //strcpy(log_out_msg,tmp_buff);
+            my_index=report.event.params.le_advertising_report_event.address[0]-1;
+						rssi_data[my_index][0]++;
+						rssi_data[my_index][1]=report.event.params.le_advertising_report_event.rssi;
+						
 						for(int i=0;i<sensor_count;i++)
 						{
-							sprintf(tmp_buff,"%d ",report.event.params.le_advertising_report_event.report_data[1+i]);
-							strcat(log_out_msg,tmp_buff);
+							//sprintf(tmp_buff,"%d ",report.event.params.le_advertising_report_event.report_data[1+i]);
+							//strcat(log_out_msg,tmp_buff);
+							if(report.event.params.le_advertising_report_event.report_data[1+i]!=0)
+								rssi_data[my_index][i+2]=report.event.params.le_advertising_report_event.report_data[1+i];
 						}
-            */
-            __LOG("%s",log_out_msg);
+           // __LOG("%s",log_out_msg);
           }
 					else if(report.event.params.le_advertising_report_event.report_data[0]==0x00)
           {
-              memset(log_out_msg, 0, sizeof(log_out_msg));
-              strcpy(log_out_msg,"C");
+              //memset(log_out_msg, 0, sizeof(log_out_msg));
+              //strcpy(log_out_msg,"C");
+							test_logf("C");
               for(int i=0;i<sensor_count;i++)
               {
-                sprintf(tmp_buff, " %d-%d",rssi_data[i][0],rssi_data[i][sensor_count+1]);
-                strcat(log_out_msg,tmp_buff);
+								test_logf(" %d-%d",rssi_data[i][0],rssi_data[i][1]);
+                //sprintf(tmp_buff, " %d-%d",rssi_data[i][0],rssi_data[i][1]);
+                //strcat(log_out_msg,tmp_buff);
               }
-              strcat(log_out_msg,"\r\n");
+              //strcat(log_out_msg,"\r\n");
+							test_logf("\r\n");
 						
               for(int i=0;i<sensor_count;i++)
               {
@@ -263,19 +273,21 @@ int main(void)
                 //strcat(log_out_msg,tmp_buff);
                 for(int j=0;j<sensor_count;j++)
                 {
-                  sprintf(tmp_buff," %d",rssi_data[i][j+i]);
-                  strcat(log_out_msg,tmp_buff);
+                  test_logf("%d ",rssi_data[i][j+2]);
+                  //strcat(log_out_msg,tmp_buff);
                 }
-								strcat(log_out_msg,"\r\n");
+								//strcat(log_out_msg,"\r\n");
+								test_logf("\r\n");
               }
-              __LOG("%s",log_out_msg);
-              clear_rssi_matrix();
+              //__LOG("%s",log_out_msg);
+              //clear_rssi_matrix();
+							memset(rssi_data,0,sizeof(rssi_data));
           }
 							break;
 							
 							//RSSI Data current debug
 					case BTLE_VS_EVENT_NRF_LL_EVENT_SCAN_REQ_REPORT:
-						__LOG("type %X, info: %s",report.event.params.le_advertising_report_event.address[0],
+						__LOG("%X. %s",report.event.params.le_advertising_report_event.address[0],
                   report.event.params.le_advertising_report_event.report_data);
 						/*for(uint8_t j=0;j<report.event.params.le_advertising_report_event.length_data;j++)
 						{
@@ -419,7 +431,7 @@ static void initialize_uart(void)
     .cts_pin_no   = CTS_PIN_NUMBER,
     .flow_control = APP_UART_FLOW_CONTROL_DISABLED,
     .use_parity   = false,
-    .baud_rate    = UART_BAUDRATE_BAUDRATE_Baud1M
+    .baud_rate    = UART_BAUDRATE_BAUDRATE_Baud250000
   };
   APP_UART_FIFO_INIT(&uart_params,
                      UART_RX_BUF_SIZE,
