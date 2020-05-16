@@ -277,8 +277,9 @@ int main(void)
                   //strcat(log_out_msg,tmp_buff);
                 }
 								//strcat(log_out_msg,"\r\n");
-								test_logf("\r\n");
+								test_logf("-");
               }
+							test_logf("\r\n");
               //__LOG("%s",log_out_msg);
               //clear_rssi_matrix();
 							memset(rssi_data,0,sizeof(rssi_data));
@@ -431,13 +432,13 @@ static void initialize_uart(void)
     .cts_pin_no   = CTS_PIN_NUMBER,
     .flow_control = APP_UART_FLOW_CONTROL_DISABLED,
     .use_parity   = false,
-    .baud_rate    = UART_BAUDRATE_BAUDRATE_Baud250000
+    .baud_rate    = UART_BAUDRATE_BAUDRATE_Baud1M
   };
   APP_UART_FIFO_INIT(&uart_params,
                      UART_RX_BUF_SIZE,
                      UART_TX_BUF_SIZE,
                      uart_event_handle,
-                     APP_IRQ_PRIORITY_LOW,
+                     APP_IRQ_PRIORITY_HIGH,
                      status);
   if (status != NRF_SUCCESS)
   {

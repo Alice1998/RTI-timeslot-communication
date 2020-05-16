@@ -44,7 +44,7 @@ class SerialPort:
 
 
 serialPort = 'COM5'  # 串口 5
-baudRate = 250000  # 波特率 250000
+baudRate = 1000000  # 波特率 250000
 is_exit=False
 data_bytes=bytearray()
 
