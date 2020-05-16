@@ -260,24 +260,24 @@ int main(void)
 							test_logf("C");
               for(int i=0;i<sensor_count;i++)
               {
-								test_logf(" %d-%d",rssi_data[i][0],rssi_data[i][1]);
+								test_logf("-%d %d",rssi_data[i][0],rssi_data[i][1]);
                 //sprintf(tmp_buff, " %d-%d",rssi_data[i][0],rssi_data[i][1]);
                 //strcat(log_out_msg,tmp_buff);
               }
               //strcat(log_out_msg,"\r\n");
-							test_logf("\r\n");
+							test_logf("\r\nS");
 						
               for(int i=0;i<sensor_count;i++)
               {
                 //sprintf(tmp_buff,"%d",i);
                 //strcat(log_out_msg,tmp_buff);
+								test_logf("-");
                 for(int j=0;j<sensor_count;j++)
                 {
                   test_logf("%d ",rssi_data[i][j+2]);
                   //strcat(log_out_msg,tmp_buff);
                 }
 								//strcat(log_out_msg,"\r\n");
-								test_logf("-");
               }
 							test_logf("\r\n");
               //__LOG("%s",log_out_msg);
