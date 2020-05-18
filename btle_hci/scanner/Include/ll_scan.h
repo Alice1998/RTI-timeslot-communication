@@ -41,6 +41,7 @@
 
 // add
 #define ALL_SENSOR_COUNT 8
+#define SENSOR_threshold 2
 #define MY_TIMESLOT_LENGTH 3000
 bool all_sensor_started(void);
 void send_req_for_sync(void);

@@ -48,20 +48,59 @@ def analysis_sensor():
 
 def analysis_central():
     time_stamp=0
-    with open("09-33-46.819000_central.csv",'r') as f:
+    sensor_counter=[0 for i in range(8)]
+    rssi_matrix=[[0 for i in range(8)] for j in range(8)]
+    with open("15-51-51.740000_central.csv",'r') as f:
         reader=csv.reader(f)
         for row in reader:
             if len(row)==2 and len(row[1])>0:
-                if row[1][:3]=='"C ':
+                content=row[1].split('-')
+                if content[0]=='C':
+                    for i in range(1,len(content)):
+                        index_rssi=content[i].split(' ')
+                elif content[0]=='S':
                     time=get_timestamp(row[0])
-                    #print(time,time_stamp,time-time_stamp)
-                    if time-time_stamp<0.1:
+                    if time-time_stamp<0.04:
                         data.append(time-time_stamp)
                     time_stamp=time
-analysis_sensor()
-#analysis_central()
+                    i_index=min(8,len(content))
+                    break_flag=0
+                    for i in range(1,i_index):
+                        if break_flag==1:
+                            break
+                        rssi=content[i].split(' ')
+                        index=min(8,len(rssi))
+                        for j in range(index):
+                            if 'C' in rssi[j] or 'S' in rssi[j] or '\n' in rssi[j]:
+                                break_flag=1
+                                break
+                            if  rssi[j]=="":
+                                continue
+                            value=int(rssi[j],10)
+                            # to be modified
+                            if value!=0 and value<100 and value>10:
+                                rssi_matrix[i-1][j]=int(rssi[j],10)
+                    print(row)
+                    for i in range(8):
+                        for j in range(i+1,8):
+                            if rssi_matrix[i][j]==0 or rssi_matrix[j][i]==0:
+                                rssi_matrix[i][j]+=rssi_matrix[j][i]
+                            else:
+                                rssi_matrix[i][j]=(rssi_matrix[j][i]+rssi_matrix[i][j])//2
+                            rssi_matrix[j][i]=rssi_matrix[i][j]
+                        print(rssi_matrix[i])
+                    print('\n')
+                    # to be modified
+                    rssi_matrix=[[0 for i in range(8)] for j in range(8)]
+                    
+                else:
+                    print(content)
 
-plt.hist(data, bins=5000, normed=0, facecolor="blue", edgecolor="black", alpha=0.7)
+
+#analysis_sensor()
+analysis_central()
+
+plt.hist(data, bins=4000, normed=0, facecolor="blue", edgecolor="black", alpha=0.7)
 # 显示横轴标签
 plt.xlabel("区间")
 # 显示纵轴标签
@@ -69,4 +108,3 @@ plt.ylabel("频数/频率")
 # 显示图标题
 plt.title("频数/频率分布直方图")
 plt.show()
-

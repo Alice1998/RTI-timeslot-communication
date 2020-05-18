@@ -144,6 +144,7 @@ static uint8_t MY_RSP_PACKET_POS0_POS2[]={0x44,ALL_SENSOR_COUNT+1,0x00};
 static uint8_t sensor_packet_count[31];
 static uint8_t sensor_adv_count=0;
 static uint8_t sync_flag=0; // to be modified!!
+static uint8_t req_counter=0;
 
 
 
@@ -169,28 +170,27 @@ static void m_state_receive_scan_rsp_exit (void);
 *****************************************************************************/
 
 uint8_t **rssi_matrix_data;
-uint8_t **main_rssi;
 
 void init_rssi_matrix()
 {
 	rssi_matrix_data=(uint8_t**)malloc(30*sizeof(uint8_t*));
-	main_rssi=(uint8_t**)malloc(30*sizeof(uint8_t*));
 	for(int i=0;i<30;i++)
 	{
 	  rssi_matrix_data[i]=(uint8_t*)malloc(32*sizeof(uint8_t));
-		main_rssi[i]=(uint8_t*)malloc(32*sizeof(uint8_t));
 	}
 	//memset(rssi_matrix,0,sizeof(rssi_matrix));
 }
 uint8_t** get_rssi_data()
 {
-	return main_rssi;
+	return rssi_matrix_data;
 }
 void clear_rssi_data()
 {
+  /*
 	for(int i=0;i<ALL_SENSOR_COUNT;i++)
 		memset(rssi_matrix_data[i],0,sizeof(uint8_t)*(ALL_SENSOR_COUNT+2));
 	data_report_generate(0x0,"clear",sizeof("clear"));
+  */
 }
 
 
@@ -229,6 +229,7 @@ static void m_adv_report_generate(uint8_t * const pkt)
   {
    adv_report->length_data=ALL_SENSOR_COUNT-1;
    memcpy(&(adv_report->report_data[1]), &pkt[4], ALL_SENSOR_COUNT);
+   sensor_rsp_count++;
   }
 
   report.valid_packets = m_packets_valid;
@@ -248,12 +249,13 @@ static void m_adv_report_generate(uint8_t * const pkt)
 	
 	
   adv_report->num_reports = 1;
-	
+	/*
 	for(int i=0;i<ALL_SENSOR_COUNT;i++)
 	{
 		memcpy(main_rssi[i],rssi_matrix_data[i],(ALL_SENSOR_COUNT+2)*sizeof(uint8_t));
 		memset(rssi_matrix_data[i],0,(ALL_SENSOR_COUNT+2)*sizeof(uint8_t));
 	}
+  */
   nrf_report_disp_dispatch (&report);
 }
 
@@ -557,7 +559,7 @@ void ll_scan_rx_cb (bool crc_valid)
           {
             index=get_packet_index(m_rx_buf);
 						//data_report_generate(index,"test",sizeof("test"));
-            if (index<SENSOR_MAX)
+            if (index<ALL_SENSOR_COUNT+1)
             {
               deal_sensor_adv(index);
             }
@@ -786,11 +788,41 @@ btle_status_codes_t ll_scan_start (void)
   //radio_init (channel++);
 	radio_init(37);
   //radio_rx_timeout_init ();
-	
+
+  
 	if (all_sensor_started())
-		send_req_for_sync();
+  {
+    if (sensor_rsp_count>=ALL_SENSOR_COUNT-SENSOR_threshold)
+      req_counter++;
+    if(req_counter<=10)
+    {
+      sensor_rsp_count=0;
+      send_req_for_sync();
+    }
+    else if(sensor_rsp_count<=SENSOR_threshold) // in case some restarted
+    {
+      sensor_rsp_count=0;
+      req_counter=0;
+      send_req_for_sync();
+    }
+    else if(req_counter==20)
+    {
+      sensor_rsp_count=0;
+      req_counter=11;
+      send_req_for_sync();
+    }
+    else
+    {
+      sensor_rsp_count=0;
+      m_state_receive_adv_entry();
+    }
+  }
 	else
-		m_state_receive_adv_entry ();
+  {
+    data_report_generate(sensor_rsp_count,"rsp_count_in_adv",sizeof("rsp_count_in_adv"));
+    sensor_rsp_count=0;
+    m_state_receive_adv_entry ();
+  }
 
   return BTLE_STATUS_CODE_SUCCESS;
 }
