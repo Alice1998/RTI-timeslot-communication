@@ -662,6 +662,7 @@ void ll_scan_timeout_cb (void)
 
 void send_req_for_sync(void)
 {
+	data_report_generate(req_counter,"send_req",sizeof("send_req"));
   if(sync_flag==1)
   {
     m_state_receive_adv_exit();
@@ -681,7 +682,6 @@ void send_req_for_sync(void)
       break;
     }
   sync_flag=1;
-	matrix_data_dispatch();
 	//memset(sensor_packet_count,0,ALL_SENSOR_COUNT);
   m_state_send_scan_req_entry();
 }
@@ -792,34 +792,35 @@ btle_status_codes_t ll_scan_start (void)
   
 	if (all_sensor_started())
   {
-    if (sensor_rsp_count>=ALL_SENSOR_COUNT-SENSOR_threshold)
-      req_counter++;
     if(req_counter<=10)
     {
+			if (sensor_rsp_count>=ALL_SENSOR_COUNT-SENSOR_threshold)
+				req_counter++;
       sensor_rsp_count=0;
       send_req_for_sync();
     }
     else if(sensor_rsp_count<=SENSOR_threshold) // in case some restarted
     {
+			//req_counter=0;
       sensor_rsp_count=0;
-      req_counter=0;
       send_req_for_sync();
     }
     else if(req_counter==20)
     {
-      sensor_rsp_count=0;
       req_counter=11;
+      sensor_rsp_count=0;
       send_req_for_sync();
     }
     else
     {
+			req_counter++;
       sensor_rsp_count=0;
       m_state_receive_adv_entry();
     }
+		matrix_data_dispatch();
   }
 	else
   {
-    data_report_generate(sensor_rsp_count,"rsp_count_in_adv",sizeof("rsp_count_in_adv"));
     sensor_rsp_count=0;
     m_state_receive_adv_entry ();
   }

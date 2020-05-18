@@ -215,9 +215,9 @@ int main(void)
 	memset(rssi_data,0,sizeof(rssi_data));
   uint8_t sensor_count=get_sensor_count();
 	uint8_t my_index;
-  //char log_out_msg[1024];
-  //char tmp_buff[31];
-  //memset(log_out_msg, 0, sizeof(log_out_msg));
+  char log_out_msg[1024];
+  char tmp_buff[31];
+  memset(log_out_msg, 0, sizeof(log_out_msg));
 
   while (true)
   {
@@ -237,9 +237,9 @@ int main(void)
 							report.invalid_packets);
           else if(report.event.params.le_advertising_report_event.report_data[0]==0x44)
           {
-            memset(log_out_msg, 0, sizeof(log_out_msg));
-            sprintf(tmp_buff, "%d %d ",report.event.params.le_advertising_report_event.address[0],report.event.params.le_advertising_report_event.rssi);
-            strcpy(log_out_msg,tmp_buff);
+            //memset(log_out_msg, 0, sizeof(log_out_msg));
+            //sprintf(tmp_buff, "%d %d ",report.event.params.le_advertising_report_event.address[0],report.event.params.le_advertising_report_event.rssi);
+            //strcpy(log_out_msg,tmp_buff);
             my_index=report.event.params.le_advertising_report_event.address[0]-1;
 						rssi_data[my_index][0]++;
 						rssi_data[my_index][1]=report.event.params.le_advertising_report_event.rssi;
@@ -251,7 +251,7 @@ int main(void)
 							if(report.event.params.le_advertising_report_event.report_data[1+i]!=0)
 								rssi_data[my_index][i+2]=report.event.params.le_advertising_report_event.report_data[1+i];
 						}
-            __LOG("%s",log_out_msg);
+            //__LOG("%s",log_out_msg);
           }
 					else if(report.event.params.le_advertising_report_event.report_data[0]==0x00)
           {
@@ -266,7 +266,7 @@ int main(void)
               }
               //strcat(log_out_msg,"\r\n");
 							test_logf("\r\nS");
-						/*
+						
               for(int i=0;i<sensor_count;i++)
               {
                 //sprintf(tmp_buff,"%d",i);
@@ -280,11 +280,10 @@ int main(void)
 								//strcat(log_out_msg,"\r\n");
               }
 							test_logf("\r\n");
-              */
+              
               //__LOG("%s",log_out_msg);
               //clear_rssi_matrix();
 							memset(rssi_data,0,sizeof(rssi_data));
-              received_flag=0;
           }
 							break;
 							

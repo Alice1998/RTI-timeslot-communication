@@ -34,11 +34,12 @@ class SerialPort:
                 rec_str = self.port.readline(count)[:-1]
                 if len(rec_str)==0:
                     continue
-                dt=datetime.now()
-                nowtime_str=dt.strftime('%H-%M-%S.%f')
-                loc_str=[nowtime_str[3:-3],rec_str]
+                #dt=datetime.now()
+                #nowtime_str=dt.strftime('%H-%M-%S.%f')
+                #loc_str=[nowtime_str[3:-3],rec_str]
+                loc_str=[rec_str]
                 csv_writer.writerow(loc_str)
-                print nowtime_str[3:-3],rec_str
+                print rec_str
                 #print('当前数据接收总字节数：'+str(len(data_bytes))+' 本次接收字节数：'+str(len(rec_str)))
                 #print str(datetime.now()),':',rec_str
 
