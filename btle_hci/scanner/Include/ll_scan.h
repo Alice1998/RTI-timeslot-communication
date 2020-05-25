@@ -40,7 +40,7 @@
 #include <stdbool.h>
 
 // add
-#define ALL_SENSOR_COUNT 12
+#define ALL_SENSOR_COUNT 13
 #define SENSOR_threshold 3
 #define MY_TIMESLOT_LENGTH 3000
 bool all_sensor_started(void);
