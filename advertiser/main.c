@@ -316,12 +316,12 @@ int main(void)
     nrf_gpio_pin_set(i);
 
   uint32_t error_code = sd_softdevice_enable((uint32_t)NRF_CLOCK_LFCLKSRC_XTAL_75_PPM, sd_assert_cb);
+	//uint32_t error_code = sd_softdevice_enable((uint32_t)NRF_CLOCK_LFCLKSRC_RC_250_PPM_250MS_CALIBRATION, sd_assert_cb);
   APP_ERROR_CHECK(error_code);
 
 
   error_code = sd_nvic_EnableIRQ(SD_EVT_IRQn);
   APP_ERROR_CHECK(error_code);
-
 	// timeslot advertiser 100ms
   ble_setup();
 
